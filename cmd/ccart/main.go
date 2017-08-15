@@ -3,11 +3,11 @@ package main
 import (
 	"database/sql"
 
+	"bitbucket.org/vunv92/consumer/config"
+	"bitbucket.org/vunv92/consumer/console"
+	"bitbucket.org/vunv92/consumer/mysql"
+	"bitbucket.org/vunv92/consumer/redis"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/nvvu/consumer/config"
-	"github.com/nvvu/consumer/console"
-	"github.com/nvvu/consumer/mysql"
-	"github.com/nvvu/consumer/redis"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -32,14 +32,18 @@ func main() {
 	}
 
 	// Create services
-	ass := &mysql.AppShopService{DB: db}
+	appShopService := &mysql.AppShopService{DB: db}
+	shopService := &mysql.ShopService{DB: db}
 
 	// Command
-	cmd := &console.Command{Ass: ass}
+	cmd := &console.Command{
+		AppShopService: appShopService,
+		ShopService:    shopService,
+	}
 
-	// cmd.Schedule()
-	// for true {
-	// }
+	cmd.Schedule()
+	for true {
+	}
 
-	cmd.BuildJSONStatisticFile()
+	// cmd.BuildJSONStatisticFile()
 }

@@ -1,16 +1,16 @@
 package consumer
 
-// Shop is lorem
+// Shop lorem
 type Shop struct {
-	ID   int
-	Name string
+	ID           int
+	UserID       int
+	Name         string
+	Domain       string
+	PublicDomain string
+	APIKey       string
 }
 
-// ShopService is lorem
+// ShopService lorem
 type ShopService interface {
-	GetById(id int) (*Shop, error)
-	Add(s *Shop) error
-	Update(s *Shop) error
-	Delete(s *Shop) error
-	DeleteById(id int) error
+	GetByID(id int) (*Shop, error)
 }
