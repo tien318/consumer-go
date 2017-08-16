@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"os"
 
 	"bitbucket.org/vunv92/consumer/config"
 	"bitbucket.org/vunv92/consumer/console"
@@ -13,9 +14,12 @@ import (
 )
 
 func init() {
+	initLog()
+
 	config.Load()
 
 	redis.Init()
+
 }
 
 func main() {
@@ -46,4 +50,15 @@ func main() {
 	select {}
 
 	// cmd.BuildJSONStatisticFile()
+}
+
+func initLog() {
+	logFile, err := os.OpenFile("/var/log/ccart.log", os.O_CREATE|os.O_WRONLY, 0666)
+
+	if err == nil {
+		log.SetOutput(logFile)
+	} else {
+		log.Fatal(err)
+		log.Info("Failed to log to file, using default stderr")
+	}
 }
