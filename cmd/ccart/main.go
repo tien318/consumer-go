@@ -9,6 +9,7 @@ import (
 	"bitbucket.org/vunv92/consumer/redis"
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 func init() {
@@ -19,7 +20,7 @@ func init() {
 
 func main() {
 	// Connect to database
-	db, err := sql.Open("mysql", "root:root@/beeketing-platform")
+	db, err := sql.Open("mysql", viper.GetString("mysql.dns"))
 
 	if err != nil {
 		log.Fatal(err)
@@ -42,8 +43,7 @@ func main() {
 	}
 
 	cmd.Schedule()
-	for true {
-	}
+	select {}
 
 	// cmd.BuildJSONStatisticFile()
 }

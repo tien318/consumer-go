@@ -3,6 +3,7 @@ package console
 import (
 	"encoding/base64"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 
@@ -24,8 +25,8 @@ type Command struct {
 func (c *Command) Schedule() {
 	cron := cron.New()
 
-	log.Info("run BuildJSONStatisticFile every 10s")
-	cron.AddFunc("@every 10s", func() {
+	log.Info("run BuildJSONStatisticFile every 5s")
+	cron.AddFunc("@every 5s", func() {
 		c.BuildJSONStatisticFile()
 	})
 
@@ -42,7 +43,7 @@ func (c *Command) BuildJSONStatisticFile() {
 	}
 
 	for _, appShop := range appShops {
-		c.BuildShopStatisticJSONFile(appShop)
+		go c.BuildShopStatisticJSONFile(appShop)
 	}
 }
 
@@ -96,9 +97,12 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 	// write statistics data to json file
 	statStr, _ := json.Marshal(stats)
 	fileName := base64.StdEncoding.EncodeToString([]byte(shop.APIKey))
-	fileName = strings.Join([]string{fileName, "json"}, ".")
 
-	err = ioutil.WriteFile(fileName, statStr, 0777)
+	if _, err := os.Stat("rest"); os.IsNotExist(err) {
+		os.Mkdir("rest", 0777)
+	}
+
+	err = ioutil.WriteFile("rest/"+fileName+".json", statStr, 0777)
 	if err != nil {
 		log.Fatal(err)
 	}
