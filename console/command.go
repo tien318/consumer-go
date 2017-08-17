@@ -15,6 +15,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var apiKeys = make(map[int]string)
+
 // Command lorem
 type Command struct {
 	AppShopService consumer.AppShopService
@@ -42,6 +44,10 @@ func (c *Command) BuildJSONStatisticFile() {
 		log.Fatal(err)
 	}
 
+	if _, err := os.Stat("rest"); os.IsNotExist(err) {
+		os.Mkdir("rest", 0777)
+	}
+
 	for _, appShop := range appShops {
 		go c.BuildShopStatisticJSONFile(appShop)
 	}
@@ -49,16 +55,6 @@ func (c *Command) BuildJSONStatisticFile() {
 
 // BuildShopStatisticJSONFile lorem
 func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
-
-	// get shop from mysql
-	shop, err := c.ShopService.GetByID(appShop.ShopID)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if shop == nil {
-		return
-	}
-
 	// get statistics data from redis
 	hashName := strings.Join([]string{"ps:", strconv.Itoa(appShop.ShopID)}, "")
 	hash, err := redis.Client.HGetAll(hashName).Result()
@@ -69,14 +65,49 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 	if len(hash) > 0 {
 		log.Info("Shop ", appShop.ShopID, " | has ", len(hash), " statistics record")
 	} else {
-		log.Error("Shop ", appShop.ShopID, " | has no statistics record")
 		return
+	}
+
+	apiKey := ""
+
+	if _, ok := apiKeys[appShop.ShopID]; !ok {
+		// get shop from mysql
+		shop, err := c.ShopService.GetByID(appShop.ShopID)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if shop == nil {
+			return
+		}
+
+		apiKeys[appShop.ShopID] = shop.APIKey
+		apiKey = shop.APIKey
+	} else {
+		apiKey = apiKeys[appShop.ShopID]
 	}
 
 	stats := make(map[string][]int)
 
+	// statistic file
+	fileName := base64.StdEncoding.EncodeToString([]byte(apiKey))
+	filePath := "rest/" + fileName + ".json"
+
+	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
+		data, err := ioutil.ReadFile(filePath)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if err := json.Unmarshal(data, &stats); err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	for key, val := range hash {
+		// fields[0]: product id
+		// fields[1]: action type
 		fields := strings.Split(key, ":")
+
 		if len(fields) != 2 {
 			log.Fatal("Invalid hash field")
 		}
@@ -85,24 +116,26 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 			stats[fields[0]] = []int{0, 0, 0}
 		}
 
+		count, _ := strconv.Atoi(val)
+
 		if fields[1] == "v" {
-			stats[fields[0]][0], _ = strconv.Atoi(val)
+			stats[fields[0]][0] += count
 		} else if fields[1] == "ac" {
-			stats[fields[0]][1], _ = strconv.Atoi(val)
+			stats[fields[0]][1] += count
 		} else if fields[1] == "p" {
-			stats[fields[0]][2], _ = strconv.Atoi(val)
+			stats[fields[0]][2] += count
 		}
+	}
+
+	// Delete hash
+	_, err = redis.Client.Del(hashName).Result()
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// write statistics data to json file
 	statStr, _ := json.Marshal(stats)
-	fileName := base64.StdEncoding.EncodeToString([]byte(shop.APIKey))
-
-	if _, err := os.Stat("rest"); os.IsNotExist(err) {
-		os.Mkdir("rest", 0777)
-	}
-
-	err = ioutil.WriteFile("rest/"+fileName+".json", statStr, 0777)
+	err = ioutil.WriteFile(filePath, statStr, 0777)
 	if err != nil {
 		log.Fatal(err)
 	}

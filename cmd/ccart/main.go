@@ -19,7 +19,6 @@ func init() {
 	config.Load()
 
 	redis.Init()
-
 }
 
 func main() {
@@ -47,13 +46,14 @@ func main() {
 	}
 
 	cmd.Schedule()
-	select {}
 
 	// cmd.BuildJSONStatisticFile()
+
+	select {}
 }
 
 func initLog() {
-	logFile, err := os.OpenFile("/var/log/ccart.log", os.O_CREATE|os.O_WRONLY, 0666)
+	logFile, err := os.OpenFile("ccart.log", os.O_CREATE|os.O_WRONLY, 0666)
 
 	if err == nil {
 		log.SetOutput(logFile)
