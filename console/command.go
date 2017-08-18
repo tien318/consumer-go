@@ -13,6 +13,7 @@ import (
 	"bitbucket.org/vunv92/consumer/redis"
 	"github.com/robfig/cron"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 var apiKeys = make(map[int]string)
@@ -27,8 +28,9 @@ type Command struct {
 func (c *Command) Schedule() {
 	cron := cron.New()
 
-	log.Info("run BuildJSONStatisticFile every 5s")
-	cron.AddFunc("@every 5s", func() {
+	ccartInterval := viper.GetString("crons.ccart")
+	log.Info("run BuildJSONStatisticFile every", ccartInterval)
+	cron.AddFunc("@every "+ccartInterval, func() {
 		c.BuildJSONStatisticFile()
 	})
 
