@@ -3,7 +3,7 @@ package mysql
 import (
 	"database/sql"
 
-	"bitbucket.org/vunv92/consumer"
+	"beeketing.com/consumer"
 	log "github.com/sirupsen/logrus"
 )
 

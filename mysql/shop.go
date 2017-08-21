@@ -5,7 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"bitbucket.org/vunv92/consumer"
+	"beeketing.com/consumer"
 )
 
 // ShopService lorem

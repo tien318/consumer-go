@@ -9,8 +9,8 @@ import (
 
 	"encoding/json"
 
-	"bitbucket.org/vunv92/consumer"
-	"bitbucket.org/vunv92/consumer/redis"
+	"beeketing.com/consumer"
+	"beeketing.com/consumer/redis"
 	"github.com/robfig/cron"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
