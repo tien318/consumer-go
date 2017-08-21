@@ -9,5 +9,9 @@
     },
     "crons": {
         "ccart": "5s"
+    },
+    "log": {
+        // "default", "file"
+        "output": "default"
     }
 }
