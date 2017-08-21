@@ -29,7 +29,7 @@ func (c *Command) Schedule() {
 	cron := cron.New()
 
 	ccartInterval := viper.GetString("crons.ccart")
-	log.Info("run BuildJSONStatisticFile every", ccartInterval)
+	log.Info("run BuildJSONStatisticFile every ", ccartInterval)
 	cron.AddFunc("@every "+ccartInterval, func() {
 		c.BuildJSONStatisticFile()
 	})

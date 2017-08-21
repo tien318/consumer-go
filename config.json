@@ -8,10 +8,9 @@
         "db": 0
     },
     "crons": {
-        "ccart": "5s"
+        "ccart": "30s"
     },
     "log": {
-        // "default", "file"
         "output": "default"
     }
 }

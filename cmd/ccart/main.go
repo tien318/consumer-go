@@ -14,9 +14,9 @@ import (
 )
 
 func init() {
-	initLog()
-
 	config.Load()
+
+	initLog()
 
 	redis.Init()
 }
