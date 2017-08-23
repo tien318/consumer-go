@@ -3,9 +3,11 @@ package console
 import (
 	"encoding/base64"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"encoding/json"
 
@@ -153,8 +155,10 @@ func (c *Command) initProductStatisticsData(productID string) []int {
 		log.Fatal(err)
 	}
 
-	addToCart = purchase * 2
-	view = addToCart * 5
+	rand.Seed(time.Now().UnixNano())
+	addToCart = int(float32(purchase) * (rand.Float32() + 1))
+
+	view = addToCart * (rand.Intn(10) + 10)
 
 	return []int{view, addToCart, purchase}
 }
