@@ -18,10 +18,13 @@ import (
 
 var apiKeys = make(map[int]string)
 
+const ccartAppID int = 16
+
 // Command lorem
 type Command struct {
 	AppShopService consumer.AppShopService
 	ShopService    consumer.ShopService
+	OrderService   consumer.OrderService
 }
 
 // Schedule lorem
@@ -40,12 +43,25 @@ func (c *Command) Schedule() {
 // BuildJSONStatisticFile lorem
 func (c *Command) BuildJSONStatisticFile() {
 	log.Info("BuildJSONStatisticFile")
-	appShops, err := c.AppShopService.GetByAppID(16)
+	// get all app shop
+	appShops, err := c.AppShopService.GetByAppID(ccartAppID)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	shopIDs := []int{}
+	for _, appShop := range appShops {
+		shopIDs = append(shopIDs, appShop.ShopID)
+	}
+
+	// get shops to get apikeys
+	shops, err := c.ShopService.GetByIDs(shopIDs)
+	for _, shop := range shops {
+		apiKeys[shop.ID] = shop.APIKey
+	}
+
+	// create rest file if not exist
 	if _, err := os.Stat("rest"); os.IsNotExist(err) {
 		os.Mkdir("rest", 0777)
 	}
@@ -58,40 +74,21 @@ func (c *Command) BuildJSONStatisticFile() {
 // BuildShopStatisticJSONFile lorem
 func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 	// get statistics data from redis
-	hashName := strings.Join([]string{"ps:", strconv.Itoa(appShop.ShopID)}, "")
+	hashName := "ps:" + strconv.Itoa(appShop.ShopID)
 	hash, err := redis.Client.HGetAll(hashName).Result()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if len(hash) > 0 {
-		log.Info("Shop ", appShop.ShopID, " | has ", len(hash), " statistics record")
-	} else {
+	log.Info("Shop ", appShop.ShopID, " | has ", len(hash), " statistics record")
+	if len(hash) == 0 {
 		return
-	}
-
-	apiKey := ""
-
-	if _, ok := apiKeys[appShop.ShopID]; !ok {
-		// get shop from mysql
-		shop, err := c.ShopService.GetByID(appShop.ShopID)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if shop == nil {
-			return
-		}
-
-		apiKeys[appShop.ShopID] = shop.APIKey
-		apiKey = shop.APIKey
-	} else {
-		apiKey = apiKeys[appShop.ShopID]
 	}
 
 	stats := make(map[string][]int)
 
 	// statistic file
-	fileName := base64.StdEncoding.EncodeToString([]byte(apiKey))
+	fileName := base64.StdEncoding.EncodeToString([]byte(apiKeys[appShop.ShopID]))
 	filePath := "rest/" + fileName + ".json"
 
 	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
@@ -115,7 +112,7 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 		}
 
 		if _, ok := stats[fields[0]]; !ok {
-			stats[fields[0]] = []int{0, 0, 0}
+			stats[fields[0]] = c.initProductStatisticsData(fields[0])
 		}
 
 		count, _ := strconv.Atoi(val)
@@ -142,5 +139,22 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 		log.Fatal(err)
 	}
 
-	log.Info(string(statStr))
+	// log.Info(string(statStr))
+}
+
+func (c *Command) initProductStatisticsData(productID string) []int {
+	var view, addToCart, purchase int = 0, 0, 0
+
+	// query to mongo to get count order
+	id, _ := strconv.Atoi(productID)
+	purchase, err := c.OrderService.CountByProductRefID(id)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	addToCart = purchase * 2
+	view = addToCart * 5
+
+	return []int{view, addToCart, purchase}
 }

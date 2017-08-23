@@ -4,6 +4,10 @@ import (
 	"database/sql"
 	"os"
 
+	"beeketing.com/consumer/mongo"
+
+	mgo "gopkg.in/mgo.v2"
+
 	"beeketing.com/consumer/config"
 	"beeketing.com/consumer/console"
 	"beeketing.com/consumer/mysql"
@@ -22,9 +26,8 @@ func init() {
 }
 
 func main() {
-	// Connect to database
-	db, err := sql.Open("mysql", viper.GetString("mysql.dns"))
-
+	// Connect to mysql
+	db, err := sql.Open("mysql", viper.GetString("mysql.dsn"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,14 +38,23 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// mongodb
+	session, err := mgo.Dial(viper.GetString("mongodb.url"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer session.Close()
+
 	// Create services
 	appShopService := &mysql.AppShopService{DB: db}
 	shopService := &mysql.ShopService{DB: db}
+	orderService := &mongo.OrderService{Session: session}
 
 	// Command
 	cmd := &console.Command{
 		AppShopService: appShopService,
 		ShopService:    shopService,
+		OrderService:   orderService,
 	}
 
 	cmd.Schedule()
@@ -53,7 +65,7 @@ func main() {
 }
 
 func initLog() {
-	log.SetFormatter(&log.JSONFormatter{})
+	// log.SetFormatter(&log.JSONFormatter{})
 
 	logOutput := viper.GetString("log.output")
 

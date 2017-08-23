@@ -1,11 +1,14 @@
 {
     "mysql": {
-        "dns": "root:root@/beeketing-platform"
+        "dsn": "root:root@/beeketing-platform"
     },
     "redis": {
         "host": "localhost:6379",
         "password": "",
         "db": 0
+    },
+    "mongodb": {
+        "url": "localhost:27017/beeketing-platform"
     },
     "crons": {
         "ccart": "30s"

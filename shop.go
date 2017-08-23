@@ -13,4 +13,5 @@ type Shop struct {
 // ShopService lorem
 type ShopService interface {
 	GetByID(id int) (*Shop, error)
+	GetByIDs(ids []int) ([]*Shop, error)
 }
