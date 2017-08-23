@@ -2,19 +2,22 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 
-	"beeketing.com/consumer/mongo"
-
-	mgo "gopkg.in/mgo.v2"
+	"net/http"
 
 	"beeketing.com/consumer/config"
 	"beeketing.com/consumer/console"
+	"beeketing.com/consumer/mongo"
 	"beeketing.com/consumer/mysql"
 	"beeketing.com/consumer/redis"
+
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	mgo "gopkg.in/mgo.v2"
 )
 
 func init() {
@@ -59,9 +62,22 @@ func main() {
 
 	cmd.Schedule()
 
+	// for development only
 	// cmd.BuildJSONStatisticFile()
 
-	select {}
+	router := httprouter.New()
+
+	router.GET("/", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		fmt.Fprintln(w, "Hello")
+	})
+
+	router.ServeFiles("/rest/*filepath", http.Dir("./rest"))
+
+	log.Info("Server listen and serve at http://localhost:8088")
+
+	log.Fatal(http.ListenAndServe(":8088", router))
+
+	// select {}
 }
 
 func initLog() {
