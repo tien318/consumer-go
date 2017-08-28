@@ -109,6 +109,10 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 
 	stats := make(map[string][]int)
 
+	if _, ok := apiKeys[appShop.ShopID]; !ok {
+		return
+	}
+
 	// statistic file
 	fileName := base64.StdEncoding.EncodeToString([]byte(apiKeys[appShop.ShopID]))
 	filePath := viper.GetString("static.path") + "/rest/" + fileName + ".json"
