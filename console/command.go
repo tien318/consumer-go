@@ -60,7 +60,6 @@ func (c *Command) BuildJSONStatisticFile() {
 		return
 	}
 
-	log.Info("Count appShops: ", len(appShops))
 	if len(appShops) == 0 {
 		return
 	}
@@ -78,7 +77,6 @@ func (c *Command) BuildJSONStatisticFile() {
 	}
 
 	log.Info("Count shops: ", len(shops))
-	log.Info("Count apiKeys: ", len(apiKeys))
 
 	// create rest file if not exist
 	restPath := viper.GetString("static.path") + "/rest/"
@@ -101,11 +99,10 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 		return
 	}
 
+	// log.Info("Shop ", appShop.ShopID, " | has ", len(hash), " statistics record")
 	if len(hash) == 0 {
 		return
 	}
-
-	log.Info("Shop ", appShop.ShopID, " | has ", len(hash), " statistics record")
 
 	stats := make(map[string][]int)
 
