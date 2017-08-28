@@ -26,7 +26,7 @@ import (
 func init() {
 	config.Load()
 
-	initLog()
+	// initLog()
 }
 
 func main() {
@@ -100,22 +100,26 @@ func main() {
 
 			err := json.Unmarshal(d.Body, &msgData)
 			if err != nil {
-				log.Fatal(err)
+				log.Errorln("Unmarchal message failed")
+				return
 			}
 
 			appShop, err := appShopService.GetByID(msgData["app_shop_id"])
 			if err != nil {
-				log.Fatal(err)
+				log.Errorln("get app shop failed")
+				return
 			}
 
 			shop, err := shopService.GetByID(appShop.ShopID)
 			if err != nil {
-				log.Fatal(err)
+				log.Errorln("get shop failed")
+				return
 			}
 
 			products, err := productService.GetByShopID(appShop.ShopID)
 			if err != nil {
-				log.Fatal(err)
+				log.Errorln("get products failed")
+				return
 			}
 
 			stats := make(map[string][]int)
@@ -129,7 +133,7 @@ func main() {
 
 			err = ioutil.WriteFile(filePath, statStr, 0777)
 			if err != nil {
-				log.Fatal(err)
+				log.Errorln("Write json data to file failed")
 			}
 		}
 	}()
@@ -144,19 +148,19 @@ func failOnError(err error, msg string) {
 	}
 }
 
-func initLog() {
-	// log.SetFormatter(&log.JSONFormatter{})
+// func initLog() {
+// 	// log.SetFormatter(&log.JSONFormatter{})
 
-	logOutput := viper.GetString("log.output")
+// 	logOutput := viper.GetString("log.output")
 
-	if logOutput == "file" {
-		logFile, err := os.OpenFile("ccart.log", os.O_CREATE|os.O_WRONLY, 0666)
+// 	if logOutput == "file" {
+// 		logFile, err := os.OpenFile("ccart.log", os.O_CREATE|os.O_WRONLY, 0666)
 
-		if err == nil {
-			log.SetOutput(logFile)
-		} else {
-			log.Fatal(err)
-			log.Info("Failed to log to file, using default stderr")
-		}
-	}
-}
+// 		if err == nil {
+// 			log.SetOutput(logFile)
+// 		} else {
+// 			log.Fatal(err)
+// 			log.Info("Failed to log to file, using default stderr")
+// 		}
+// 	}
+// }

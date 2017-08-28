@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"os"
 
 	"beeketing.com/consumer/config"
 	"beeketing.com/consumer/console"
@@ -19,7 +18,7 @@ import (
 func init() {
 	config.Load()
 
-	initLog()
+	// initLog()
 
 	redis.Init()
 }
@@ -64,19 +63,19 @@ func main() {
 	select {}
 }
 
-func initLog() {
-	// log.SetFormatter(&log.JSONFormatter{})
+// func initLog() {
+// 	// log.SetFormatter(&log.JSONFormatter{})
 
-	logOutput := viper.GetString("log.output")
+// 	logOutput := viper.GetString("log.output")
 
-	if logOutput == "file" {
-		logFile, err := os.OpenFile("ccart.log", os.O_CREATE|os.O_WRONLY, 0666)
+// 	if logOutput == "file" {
+// 		logFile, err := os.OpenFile("ccart.log", os.O_CREATE|os.O_WRONLY, 0666)
 
-		if err == nil {
-			log.SetOutput(logFile)
-		} else {
-			log.Fatal(err)
-			log.Info("Failed to log to file, using default stderr")
-		}
-	}
-}
+// 		if err == nil {
+// 			log.SetOutput(logFile)
+// 		} else {
+// 			log.Fatal(err)
+// 			log.Info("Failed to log to file, using default stderr")
+// 		}
+// 	}
+// }
