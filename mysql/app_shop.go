@@ -14,7 +14,13 @@ type AppShopService struct {
 
 // GetByID is todo
 func (s *AppShopService) GetByID(id int) (*consumer.AppShop, error) {
-	var appShop *consumer.AppShop
+	appShop := &consumer.AppShop{}
+
+	err := s.DB.QueryRow("select id, app_id, shop_id from apps_shops where id = ?", id).Scan(&appShop.ID, &appShop.AppID, &appShop.ShopID)
+
+	if err != nil {
+		return nil, err
+	}
 
 	return appShop, nil
 }
