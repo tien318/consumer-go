@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"os"
 
 	"beeketing.com/consumer/config"
 	"github.com/julienschmidt/httprouter"
@@ -14,7 +13,7 @@ import (
 func init() {
 	config.Load()
 
-	initLog()
+	// initLog()
 }
 
 func main() {
@@ -28,24 +27,24 @@ func main() {
 
 	router.ServeFiles("/rest/*filepath", http.Dir(restPath))
 
-	log.Info("Server listen and serve at http://localhost:8088")
+	log.Info("Server listen and serve at http://localhost:8092")
 
 	log.Fatal(http.ListenAndServe(":8088", router))
 }
 
-func initLog() {
-	// log.SetFormatter(&log.JSONFormatter{})
+// func initLog() {
+// 	// log.SetFormatter(&log.JSONFormatter{})
 
-	logOutput := viper.GetString("log.output")
+// 	logOutput := viper.GetString("log.output")
 
-	if logOutput == "file" {
-		logFile, err := os.OpenFile("ccart.log", os.O_CREATE|os.O_WRONLY, 0666)
+// 	if logOutput == "file" {
+// 		logFile, err := os.OpenFile("ccart.log", os.O_CREATE|os.O_WRONLY, 0666)
 
-		if err == nil {
-			log.SetOutput(logFile)
-		} else {
-			log.Fatal(err)
-			log.Info("Failed to log to file, using default stderr")
-		}
-	}
-}
+// 		if err == nil {
+// 			log.SetOutput(logFile)
+// 		} else {
+// 			log.Fatal(err)
+// 			log.Info("Failed to log to file, using default stderr")
+// 		}
+// 	}
+// }
