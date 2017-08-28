@@ -69,12 +69,16 @@ func (c *Command) BuildJSONStatisticFile() {
 	for _, appShop := range appShops {
 		shopIDs = append(shopIDs, appShop.ShopID)
 	}
+	log.Info("Count ShopIDs: ", len(shopIDs))
 
 	// get shops to get apikeys
 	shops, err := c.ShopService.GetByIDs(shopIDs)
 	for _, shop := range shops {
 		apiKeys[shop.ID] = shop.APIKey
 	}
+
+	log.Info("Count shops: ", len(shops))
+	log.Info("Count apiKeys: ", len(apiKeys))
 
 	// create rest file if not exist
 	restPath := viper.GetString("static.path") + "/rest/"
