@@ -12,3 +12,10 @@
 
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
+
+# binary files
+cmd/consumer/consumer
+cmd/cron/cron
+
+# config file
+config/config.json

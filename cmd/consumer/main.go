@@ -85,8 +85,9 @@ func main() {
 	)
 	failOnError(err, "Failed to register a consumer")
 
-	if _, err := os.Stat("rest"); os.IsNotExist(err) {
-		os.Mkdir("rest", 0777)
+	restPath := viper.GetString("static.path") + "/rest"
+	if _, err := os.Stat(restPath); os.IsNotExist(err) {
+		os.Mkdir(restPath, 0777)
 	}
 
 	forever := make(chan bool)
@@ -111,26 +112,20 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-			log.Println("shop id:", shop.ID)
-			log.Println("api key:", shop.APIKey)
-
-			stats := make(map[string][]int)
 
 			products, err := productService.GetByShopID(appShop.ShopID)
 			if err != nil {
 				log.Fatal(err)
 			}
 
+			stats := make(map[string][]int)
 			for _, product := range products {
 				stats[strconv.Itoa(product.RefID)] = productService.GetDefaultStatisticsData(product.RefID)
 			}
-
 			statStr, _ := json.Marshal(stats)
 
 			fileName := base64.StdEncoding.EncodeToString([]byte(shop.APIKey))
-			filePath := "rest/" + fileName + ".json"
-
-			log.Println("write to:", filePath)
+			filePath := viper.GetString("static.path") + "/rest/" + fileName + ".json"
 
 			err = ioutil.WriteFile(filePath, statStr, 0777)
 			if err != nil {

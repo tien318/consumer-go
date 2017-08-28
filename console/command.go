@@ -64,8 +64,9 @@ func (c *Command) BuildJSONStatisticFile() {
 	}
 
 	// create rest file if not exist
-	if _, err := os.Stat("rest"); os.IsNotExist(err) {
-		os.Mkdir("rest", 0777)
+	restPath := viper.GetString("static.path") + "/rest/"
+	if _, err := os.Stat(restPath); os.IsNotExist(err) {
+		os.Mkdir(restPath, 0777)
 	}
 
 	for _, appShop := range appShops {
@@ -91,7 +92,7 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 
 	// statistic file
 	fileName := base64.StdEncoding.EncodeToString([]byte(apiKeys[appShop.ShopID]))
-	filePath := "rest/" + fileName + ".json"
+	filePath := viper.GetString("static.path") + "/rest/" + fileName + ".json"
 
 	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
 		data, err := ioutil.ReadFile(filePath)
