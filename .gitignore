@@ -16,6 +16,7 @@
 # binary files
 cmd/consumer/consumer
 cmd/cron/cron
+cmd/web/web
 
 # config file
 config/config.json
