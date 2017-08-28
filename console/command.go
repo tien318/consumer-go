@@ -97,10 +97,11 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 		return
 	}
 
-	// log.Info("Shop ", appShop.ShopID, " | has ", len(hash), " statistics record")
 	if len(hash) == 0 {
 		return
 	}
+
+	log.Info("Shop ", appShop.ShopID, " | has ", len(hash), " statistics record")
 
 	stats := make(map[string][]int)
 
@@ -111,12 +112,12 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
 		data, err := ioutil.ReadFile(filePath)
 		if err != nil {
-			log.Error(err)
+			log.Errorf("%s: %s | %s", "Read json file failed", filePath, err)
 			return
 		}
 
 		if err := json.Unmarshal(data, &stats); err != nil {
-			log.Error(err)
+			log.Errorf("%s: %s | %s", "Unmarshal json file failed", filePath, err)
 			return
 		}
 	}
