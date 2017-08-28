@@ -97,7 +97,7 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 		return
 	}
 
-	log.Info("Shop ", appShop.ShopID, " | has ", len(hash), " statistics record")
+	// log.Info("Shop ", appShop.ShopID, " | has ", len(hash), " statistics record")
 	if len(hash) == 0 {
 		return
 	}
