@@ -45,12 +45,14 @@ func main() {
 	defer session.Close()
 
 	// Create services
+	appService := &mysql.AppService{DB: db}
 	appShopService := &mysql.AppShopService{DB: db}
 	shopService := &mysql.ShopService{DB: db}
 	orderService := &mongo.OrderService{Session: session}
 
 	// Command
 	cmd := &console.Command{
+		AppService:     appService,
 		AppShopService: appShopService,
 		ShopService:    shopService,
 		OrderService:   orderService,

@@ -20,10 +20,11 @@ import (
 
 var apiKeys = make(map[int]string)
 
-const ccartAppID int = 16
+const ccartAppCode string = "countdown_cart"
 
 // Command lorem
 type Command struct {
+	AppService     consumer.AppService
 	AppShopService consumer.AppShopService
 	ShopService    consumer.ShopService
 	OrderService   consumer.OrderService
@@ -45,8 +46,14 @@ func (c *Command) Schedule() {
 // BuildJSONStatisticFile lorem
 func (c *Command) BuildJSONStatisticFile() {
 	log.Info("Build JSON Statistic File")
+	app, err := c.AppService.GetByAppCode(ccartAppCode)
+
+	if err != nil {
+		log.Errorf("%s: %s", "Get App failed", err)
+	}
+
 	// get all app shop
-	appShops, err := c.AppShopService.GetByAppID(ccartAppID)
+	appShops, err := c.AppShopService.GetByAppID(app.ID)
 
 	if err != nil {
 		log.Errorf("%s: %s", "Get appShops failed", err)
@@ -54,6 +61,9 @@ func (c *Command) BuildJSONStatisticFile() {
 	}
 
 	log.Info("Count appShops: ", len(appShops))
+	if len(appShops) == 0 {
+		return
+	}
 
 	shopIDs := []int{}
 	for _, appShop := range appShops {
