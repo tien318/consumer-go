@@ -18,5 +18,8 @@
     },
     "crons": {
         "ccart": "30s"
+    },
+    "static": {
+        "path": "../../static"
     }
 }

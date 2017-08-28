@@ -96,29 +96,29 @@ func main() {
 		var msgData map[string]int
 
 		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
+			log.Infof("Received a message: %s", d.Body)
 
 			err := json.Unmarshal(d.Body, &msgData)
 			if err != nil {
-				log.Errorln("Unmarchal message failed")
+				log.Errorf("%s: %s", "Unmarchal message failed", err)
 				return
 			}
 
 			appShop, err := appShopService.GetByID(msgData["app_shop_id"])
 			if err != nil {
-				log.Errorln("get app shop failed")
+				log.Errorf("%s: %s", "Get app shop failed", err)
 				return
 			}
 
 			shop, err := shopService.GetByID(appShop.ShopID)
 			if err != nil {
-				log.Errorln("get shop failed")
+				log.Errorf("%s: %s", "Get shop failed", err)
 				return
 			}
 
 			products, err := productService.GetByShopID(appShop.ShopID)
 			if err != nil {
-				log.Errorln("get products failed")
+				log.Errorf("%s: %s", "Get products failed", err)
 				return
 			}
 
@@ -132,14 +132,16 @@ func main() {
 			filePath := viper.GetString("static.path") + "/rest/" + fileName + ".json"
 
 			err = ioutil.WriteFile(filePath, statStr, 0777)
+
+			log.Info("Update json data:", fileName)
+
 			if err != nil {
-				log.Errorln("Write json data to file failed")
-				log.Println(err)
+				log.Errorf("%s: %s", "Write json data to file failed", err)
 			}
 		}
 	}()
 
-	log.Printf("[*] Waiting for messages")
+	log.Info("[*] Waiting for messages")
 	<-forever
 }
 

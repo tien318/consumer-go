@@ -44,13 +44,16 @@ func (c *Command) Schedule() {
 
 // BuildJSONStatisticFile lorem
 func (c *Command) BuildJSONStatisticFile() {
-	log.Info("BuildJSONStatisticFile")
+	log.Info("Build JSON Statistic File")
 	// get all app shop
 	appShops, err := c.AppShopService.GetByAppID(ccartAppID)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Errorf("%s: %s", "Get appShops failed", err)
+		return
 	}
+
+	log.Info("Count appShops: ", len(appShops))
 
 	shopIDs := []int{}
 	for _, appShop := range appShops {
@@ -80,7 +83,8 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 	hashName := "ps:" + strconv.Itoa(appShop.ShopID)
 	hash, err := redis.Client.HGetAll(hashName).Result()
 	if err != nil {
-		log.Fatal(err)
+		log.Errorf("%s: %s", "Get hash from redis failed", err)
+		return
 	}
 
 	log.Info("Shop ", appShop.ShopID, " | has ", len(hash), " statistics record")
@@ -97,11 +101,13 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
 		data, err := ioutil.ReadFile(filePath)
 		if err != nil {
-			log.Fatal(err)
+			log.Error(err)
+			return
 		}
 
 		if err := json.Unmarshal(data, &stats); err != nil {
-			log.Fatal(err)
+			log.Error(err)
+			return
 		}
 	}
 
@@ -111,7 +117,8 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 		fields := strings.Split(key, ":")
 
 		if len(fields) != 2 {
-			log.Fatal("Invalid hash field")
+			log.Error(err)
+			return
 		}
 
 		if _, ok := stats[fields[0]]; !ok {
@@ -132,14 +139,16 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 	// Delete hash
 	_, err = redis.Client.Del(hashName).Result()
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return
 	}
 
 	// write statistics data to json file
 	statStr, _ := json.Marshal(stats)
 	err = ioutil.WriteFile(filePath, statStr, 0777)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return
 	}
 
 	// log.Info(string(statStr))
@@ -153,7 +162,8 @@ func (c *Command) initProductStatisticsData(productID string) []int {
 	purchase, err := c.OrderService.CountByProductRefID(id)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return []int{view, addToCart, purchase}
 	}
 
 	rand.Seed(time.Now().UnixNano())

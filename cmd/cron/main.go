@@ -24,10 +24,11 @@ func init() {
 }
 
 func main() {
+	log.Info("Start Ccart Consumer")
 	// Connect to mysql
 	db, err := sql.Open("mysql", viper.GetString("mysql.dsn"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("%s: %s", "Failed to connect to mysql", err)
 	}
 	defer db.Close()
 
@@ -39,7 +40,7 @@ func main() {
 	// mongodb
 	session, err := mgo.Dial(viper.GetString("mongodb.url"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("%s: %s", "Failed to connect to mongo", err)
 	}
 	defer session.Close()
 
