@@ -11,8 +11,9 @@ func Load() {
 	fmt.Println("Load Config")
 
 	viper.SetConfigName("config")
-	viper.AddConfigPath("../../")
 	viper.AddConfigPath(".")
+	viper.AddConfigPath("../../config/")
+	viper.AddConfigPath("./config/")
 
 	err := viper.ReadInConfig()
 
