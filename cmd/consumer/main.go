@@ -134,6 +134,7 @@ func main() {
 			err = ioutil.WriteFile(filePath, statStr, 0777)
 			if err != nil {
 				log.Errorln("Write json data to file failed")
+				log.Println(err)
 			}
 		}
 	}()
