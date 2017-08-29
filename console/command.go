@@ -72,6 +72,10 @@ func (c *Command) BuildJSONStatisticFile() {
 
 	// get shops to get apikeys
 	shops, err := c.ShopService.GetByIDs(shopIDs)
+	if err != nil {
+		log.Errorf("%s: %s", "Get shops by ids failed", err)
+	}
+
 	for _, shop := range shops {
 		apiKeys[shop.ID] = shop.APIKey
 	}
