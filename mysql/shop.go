@@ -39,13 +39,19 @@ func (s *ShopService) GetByIDs(ids []int) ([]*consumer.Shop, error) {
 	}
 	defer rows.Close()
 
+	var name, domain, publicDomain, apiKey []byte
 	for rows.Next() {
 		shop := &consumer.Shop{}
 
-		err := rows.Scan(&shop.ID, &shop.UserID, &shop.Name, &shop.Domain, &shop.PublicDomain, &shop.APIKey)
+		err := rows.Scan(&shop.ID, &shop.UserID, &name, &domain, &publicDomain, &apiKey)
 		if err != nil {
 			return shops, err
 		}
+
+		shop.Name = string(name)
+		shop.Domain = string(domain)
+		shop.PublicDomain = string(publicDomain)
+		shop.APIKey = string(apiKey)
 
 		shops = append(shops, shop)
 	}
