@@ -126,7 +126,7 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 			return
 		}
 
-		if err := json.Unmarshal(data, &productStat.Data); err != nil {
+		if err := json.Unmarshal(data, &productStat); err != nil {
 			log.Errorf("%s: %s | %s", "Unmarshal json file failed", filePath, err)
 			return
 		}
