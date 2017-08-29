@@ -133,7 +133,7 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 		fields := strings.Split(key, ":")
 
 		if len(fields) != 2 {
-			log.Error(err)
+			log.Errorf("%s: %s | %s", "Invalid hash field", key, err)
 			return
 		}
 
@@ -155,7 +155,7 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 	// Delete hash
 	_, err = redis.Client.Del(hashName).Result()
 	if err != nil {
-		log.Error(err)
+		log.Errorf("%s: %s | %s", "Delete hash failed", hashName, err)
 		return
 	}
 
@@ -163,7 +163,7 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 	statStr, _ := json.Marshal(stats)
 	err = ioutil.WriteFile(filePath, statStr, 0777)
 	if err != nil {
-		log.Error(err)
+		log.Errorf("%s: %s", "Wrire Json to file failed", err)
 		return
 	}
 
