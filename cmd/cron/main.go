@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"time"
 
 	"beeketing.com/consumer/config"
 	"beeketing.com/consumer/console"
@@ -27,10 +28,15 @@ func main() {
 	log.Info("Start Ccart Consumer")
 	// Connect to mysql
 	db, err := sql.Open("mysql", viper.GetString("mysql.dsn"))
+
 	if err != nil {
 		log.Fatalf("%s: %s", "Failed to connect to mysql", err)
 	}
 	defer db.Close()
+
+	db.SetConnMaxLifetime(time.Second * 20)
+	db.SetMaxIdleConns(30)
+	db.SetMaxOpenConns(30)
 
 	err = db.Ping()
 	if err != nil {

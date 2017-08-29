@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"time"
 
 	"strconv"
 
@@ -38,6 +39,10 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
+
+	db.SetConnMaxLifetime(time.Second * 20)
+	db.SetMaxIdleConns(30)
+	db.SetMaxOpenConns(30)
 
 	err = db.Ping()
 	if err != nil {
