@@ -6,6 +6,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+// OrderService lorem
 type OrderService struct {
 	Session *mgo.Session
 }

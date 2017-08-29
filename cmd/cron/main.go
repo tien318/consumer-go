@@ -55,6 +55,7 @@ func main() {
 	appShopService := &mysql.AppShopService{DB: db}
 	shopService := &mysql.ShopService{DB: db}
 	orderService := &mongo.OrderService{Session: session}
+	productService := &mongo.ProductService{Session: session, OrderService: orderService}
 
 	// Command
 	cmd := &console.Command{
@@ -62,6 +63,7 @@ func main() {
 		AppShopService: appShopService,
 		ShopService:    shopService,
 		OrderService:   orderService,
+		ProductService: productService,
 	}
 
 	cmd.Schedule()

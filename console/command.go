@@ -13,6 +13,7 @@ import (
 
 	"beeketing.com/consumer"
 	"beeketing.com/consumer/redis"
+	"beeketing.com/consumer/statistic"
 	"github.com/robfig/cron"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -28,6 +29,7 @@ type Command struct {
 	AppShopService consumer.AppShopService
 	ShopService    consumer.ShopService
 	OrderService   consumer.OrderService
+	ProductService consumer.ProductService
 }
 
 // Schedule lorem
@@ -68,24 +70,23 @@ func (c *Command) BuildJSONStatisticFile() {
 	for _, appShop := range appShops {
 		shopIDs = append(shopIDs, appShop.ShopID)
 	}
-	log.Info("Count ShopIDs: ", len(shopIDs))
+	// log.Info("Count ShopIDs: ", len(shopIDs))
 
 	// get shops to get apikeys
 	shops, err := c.ShopService.GetByIDs(shopIDs)
 	if err != nil {
 		log.Errorf("%s: %s", "Get shops by ids failed", err)
 	}
+	// log.Info("Count shops: ", len(shops))
 
 	for _, shop := range shops {
 		apiKeys[shop.ID] = shop.APIKey
 	}
 
-	log.Info("Count shops: ", len(shops))
-
 	// create rest file if not exist
 	restPath := viper.GetString("static.path") + "/rest/"
 	if _, err := os.Stat(restPath); os.IsNotExist(err) {
-		os.Mkdir(restPath, 0777)
+		os.Mkdir(restPath, 0755)
 	}
 
 	for _, appShop := range appShops {
@@ -108,7 +109,7 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 		return
 	}
 
-	stats := make(map[string][]int)
+	productStat := statistic.NewProductStat()
 
 	if _, ok := apiKeys[appShop.ShopID]; !ok {
 		return
@@ -125,7 +126,7 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 			return
 		}
 
-		if err := json.Unmarshal(data, &stats); err != nil {
+		if err := json.Unmarshal(data, &productStat.Data); err != nil {
 			log.Errorf("%s: %s | %s", "Unmarshal json file failed", filePath, err)
 			return
 		}
@@ -141,18 +142,20 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 			return
 		}
 
-		if _, ok := stats[fields[0]]; !ok {
-			stats[fields[0]] = c.initProductStatisticsData(fields[0])
+		if _, ok := productStat.Data[fields[0]]; !ok {
+			refID, _ := strconv.Atoi(fields[0])
+
+			productStat.Data[fields[0]] = c.ProductService.GetDefaultStatisticsData(refID)
 		}
 
 		count, _ := strconv.Atoi(val)
 
 		if fields[1] == "v" {
-			stats[fields[0]][0] += count
+			productStat.Data[fields[0]][0] += count
 		} else if fields[1] == "ac" {
-			stats[fields[0]][1] += count
+			productStat.Data[fields[0]][1] += count
 		} else if fields[1] == "p" {
-			stats[fields[0]][2] += count
+			productStat.Data[fields[0]][2] += count
 		}
 	}
 
@@ -164,14 +167,11 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 	}
 
 	// write statistics data to json file
-	statStr, _ := json.Marshal(stats)
-	err = ioutil.WriteFile(filePath, statStr, 0777)
+	err = ioutil.WriteFile(filePath, productStat.GetJSONData(), 0777)
 	if err != nil {
 		log.Errorf("%s: %s", "Wrire Json to file failed", err)
 		return
 	}
-
-	// log.Info(string(statStr))
 }
 
 func (c *Command) initProductStatisticsData(productID string) []int {
