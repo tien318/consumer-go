@@ -3,11 +3,9 @@ package console
 import (
 	"encoding/base64"
 	"io/ioutil"
-	"math/rand"
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"encoding/json"
 
@@ -172,24 +170,4 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 		log.Errorf("%s: %s", "Wrire Json to file failed", err)
 		return
 	}
-}
-
-func (c *Command) initProductStatisticsData(productID string) []int {
-	var view, addToCart, purchase int = 0, 0, 0
-
-	// query to mongo to get count order
-	id, _ := strconv.Atoi(productID)
-	purchase, err := c.OrderService.CountByProductRefID(id)
-
-	if err != nil {
-		log.Error(err)
-		return []int{view, addToCart, purchase}
-	}
-
-	rand.Seed(time.Now().UnixNano())
-	addToCart = int(float32(purchase) * (rand.Float32() + 1))
-
-	view = addToCart * (rand.Intn(10) + 10)
-
-	return []int{view, addToCart, purchase}
 }
