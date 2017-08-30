@@ -75,7 +75,7 @@ func (c *Command) BuildJSONStatisticFile() {
 	if err != nil {
 		log.Errorf("%s: %s", "Get shops by ids failed", err)
 	}
-	// log.Info("Count shops: ", len(shops))
+	log.Info("Count shops: ", len(shops))
 
 	for _, shop := range shops {
 		apiKeys[shop.ID] = shop.APIKey
