@@ -41,9 +41,9 @@ func start() {
 			}
 		}
 
-		log.Info("Messages:", len(messages))
-
 		if len(messages) > 0 {
+			log.Info("Messages:", len(messages))
+
 			data := fmt.Sprintf("%s\n", strings.Join(messages, "\n"))
 
 			f, err := os.OpenFile(filePath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
