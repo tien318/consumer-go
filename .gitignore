@@ -17,6 +17,7 @@
 cmd/consumer/consumer
 cmd/cron/cron
 cmd/web/web
+cmd/logger/logger
 
 # config file
 config/config.json
