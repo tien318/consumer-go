@@ -12,8 +12,6 @@ import (
 
 func init() {
 	config.Load()
-
-	// initLog()
 }
 
 func main() {
@@ -31,20 +29,3 @@ func main() {
 
 	log.Fatal(http.ListenAndServe(":8088", router))
 }
-
-// func initLog() {
-// 	// log.SetFormatter(&log.JSONFormatter{})
-
-// 	logOutput := viper.GetString("log.output")
-
-// 	if logOutput == "file" {
-// 		logFile, err := os.OpenFile("ccart.log", os.O_CREATE|os.O_WRONLY, 0666)
-
-// 		if err == nil {
-// 			log.SetOutput(logFile)
-// 		} else {
-// 			log.Fatal(err)
-// 			log.Info("Failed to log to file, using default stderr")
-// 		}
-// 	}
-// }

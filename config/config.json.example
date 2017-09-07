@@ -21,5 +21,8 @@
     },
     "static": {
         "path": "../../static"
+    },
+    "storage": {
+        "path": "../../storage"
     }
 }
