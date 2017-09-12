@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"beeketing.com/consumer"
+	"beeketing.com/beeketing-consumer-go"
 )
 
 // ShopService lorem

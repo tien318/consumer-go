@@ -3,7 +3,7 @@ package mysql
 import (
 	"database/sql"
 
-	"beeketing.com/consumer"
+	"beeketing.com/beeketing-consumer-go"
 	log "github.com/sirupsen/logrus"
 )
 

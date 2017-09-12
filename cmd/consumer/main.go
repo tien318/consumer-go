@@ -12,13 +12,13 @@ import (
 
 	mgo "gopkg.in/mgo.v2"
 
-	"beeketing.com/consumer/mongo"
+	"beeketing.com/beeketing-consumer-go/mongo"
 
 	log "github.com/sirupsen/logrus"
 
-	"beeketing.com/consumer/config"
-	"beeketing.com/consumer/mysql"
-	"beeketing.com/consumer/statistic"
+	"beeketing.com/beeketing-consumer-go/config"
+	"beeketing.com/beeketing-consumer-go/mysql"
+	"beeketing.com/beeketing-consumer-go/statistic"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/spf13/viper"

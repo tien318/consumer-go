@@ -9,9 +9,9 @@ import (
 
 	"encoding/json"
 
-	"beeketing.com/consumer"
-	"beeketing.com/consumer/redis"
-	"beeketing.com/consumer/statistic"
+	"beeketing.com/beeketing-consumer-go"
+	"beeketing.com/beeketing-consumer-go/redis"
+	"beeketing.com/beeketing-consumer-go/statistic"
 	"github.com/robfig/cron"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"

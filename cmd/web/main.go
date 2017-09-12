@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"beeketing.com/consumer/config"
+	"beeketing.com/beeketing-consumer-go/config"
+
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"

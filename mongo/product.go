@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"time"
 
-	"beeketing.com/consumer"
+	"beeketing.com/beeketing-consumer-go"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )

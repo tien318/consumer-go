@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"time"
 
-	"beeketing.com/consumer/config"
-	"beeketing.com/consumer/console"
-	"beeketing.com/consumer/mongo"
-	"beeketing.com/consumer/mysql"
-	"beeketing.com/consumer/redis"
+	"beeketing.com/beeketing-consumer-go/config"
+	"beeketing.com/beeketing-consumer-go/console"
+	"beeketing.com/beeketing-consumer-go/mongo"
+	"beeketing.com/beeketing-consumer-go/mysql"
+	"beeketing.com/beeketing-consumer-go/redis"
 
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/sirupsen/logrus"

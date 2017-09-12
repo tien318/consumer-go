@@ -6,8 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"beeketing.com/consumer/config"
-	"beeketing.com/consumer/redis"
+	"beeketing.com/beeketing-consumer-go/config"
+	"beeketing.com/beeketing-consumer-go/redis"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
