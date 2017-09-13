@@ -52,6 +52,7 @@ func main() {
 
 	// Create services
 	appService := &mysql.AppService{DB: db}
+	keyValueSettingService := &mysql.KeyValueSettingService{DB: db}
 	appShopService := &mysql.AppShopService{DB: db}
 	shopService := &mysql.ShopService{DB: db}
 	orderService := &mongo.OrderService{Session: session}
@@ -64,6 +65,7 @@ func main() {
 		ShopService:    shopService,
 		OrderService:   orderService,
 		ProductService: productService,
+		KeyValueSettingService: keyValueSettingService,
 	}
 
 	cmd.Schedule()
