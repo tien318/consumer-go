@@ -41,14 +41,14 @@ func (s *ShopService) GetByIDs(ids []int) ([]*consumer.Shop, error) {
 
 	strIDs := strings.Trim(strings.Join(strings.Split(fmt.Sprint(ids), " "), ","), "[]")
 
-	stmt, err := s.DB.Prepare("SELECT id, user_id, name, domain, public_domain, api_key FROM shops where id IN (?)")
+	stmt, err := s.DB.Prepare("SELECT id, user_id, name, domain, public_domain, api_key FROM shops where id IN (" + strIDs + ")")
 	if err != nil {
 		log.Println(err)
 		return shops, err
 	}
 	defer stmt.Close()
 
-	rows, err := stmt.Query(strIDs)
+	rows, err := stmt.Query()
 
 	if err != nil {
 		return shops, err
