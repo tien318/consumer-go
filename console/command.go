@@ -28,6 +28,7 @@ type Command struct {
 	ShopService    consumer.ShopService
 	OrderService   consumer.OrderService
 	ProductService consumer.ProductService
+	KeyValueSettingService consumer.KeyValueSettingService
 }
 
 // Schedule lorem
@@ -38,6 +39,12 @@ func (c *Command) Schedule() {
 	log.Info("run BuildJSONStatisticFile every ", ccartInterval)
 	cron.AddFunc("@every "+ccartInterval, func() {
 		c.BuildJSONStatisticFile()
+	})
+
+	precInterval := viper.GetString("crons.prec")
+	log.Info("run UpdatePrecStat every ", precInterval)
+	cron.AddFunc("@every "+precInterval, func() {
+		c.UpdatePrecStats()
 	})
 
 	cron.Start()
