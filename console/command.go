@@ -23,11 +23,11 @@ const ccartAppCode string = "countdown_cart"
 
 // Command lorem
 type Command struct {
-	AppService     consumer.AppService
-	AppShopService consumer.AppShopService
-	ShopService    consumer.ShopService
-	OrderService   consumer.OrderService
-	ProductService consumer.ProductService
+	AppService             consumer.AppService
+	AppShopService         consumer.AppShopService
+	ShopService            consumer.ShopService
+	OrderService           consumer.OrderService
+	ProductService         consumer.ProductService
 	KeyValueSettingService consumer.KeyValueSettingService
 }
 
@@ -75,7 +75,7 @@ func (c *Command) BuildJSONStatisticFile() {
 	for _, appShop := range appShops {
 		shopIDs = append(shopIDs, appShop.ShopID)
 	}
-	// log.Info("Count ShopIDs: ", len(shopIDs))
+	log.Info("Count ShopIDs: ", len(shopIDs))
 
 	// get shops to get apikeys
 	shops, err := c.ShopService.GetByIDs(shopIDs)
