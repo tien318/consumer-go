@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"beeketing.com/beeketing-consumer-go"
+	log "github.com/sirupsen/logrus"
 )
 
 // ShopService lorem
@@ -17,9 +18,17 @@ type ShopService struct {
 func (s *ShopService) GetByID(id int) (*consumer.Shop, error) {
 	shop := &consumer.Shop{}
 
-	err := s.DB.QueryRow("SELECT id, user_id, name, domain, public_domain, api_key FROM shops where id = ?", id).Scan(&shop.ID, &shop.UserID, &shop.Name, &shop.Domain, &shop.PublicDomain, &shop.APIKey)
+	stmt, err := s.DB.Prepare("SELECT id, user_id, name, domain, public_domain, api_key FROM shops where id = ?")
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRow(id).Scan(&shop.ID, &shop.UserID, &shop.Name, &shop.Domain, &shop.PublicDomain, &shop.APIKey)
 
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
@@ -32,7 +41,14 @@ func (s *ShopService) GetByIDs(ids []int) ([]*consumer.Shop, error) {
 
 	strIDs := strings.Trim(strings.Join(strings.Split(fmt.Sprint(ids), " "), ","), "[]")
 
-	rows, err := s.DB.Query("SELECT id, user_id, name, domain, public_domain, api_key FROM shops where id IN (" + strIDs + ")")
+	stmt, err := s.DB.Prepare("SELECT id, user_id, name, domain, public_domain, api_key FROM shops where id IN (?)")
+	if err != nil {
+		log.Println(err)
+		return shops, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(strIDs)
 
 	if err != nil {
 		return shops, err

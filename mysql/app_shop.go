@@ -16,9 +16,16 @@ type AppShopService struct {
 func (s *AppShopService) GetByID(id int) (*consumer.AppShop, error) {
 	appShop := &consumer.AppShop{}
 
-	err := s.DB.QueryRow("select id, app_id, shop_id from apps_shops where id = ?", id).Scan(&appShop.ID, &appShop.AppID, &appShop.ShopID)
-
+	stmt, err := s.DB.Prepare("select id, app_id, shop_id from apps_shops where id = ?")
 	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRow(id).Scan(&appShop.ID, &appShop.AppID, &appShop.ShopID)
+	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 
@@ -29,10 +36,17 @@ func (s *AppShopService) GetByID(id int) (*consumer.AppShop, error) {
 func (s *AppShopService) GetByAppID(appID int) ([]*consumer.AppShop, error) {
 	ass := []*consumer.AppShop{}
 
-	rows, err := s.DB.Query("SELECT id, shop_id FROM apps_shops WHERE app_id = ?", appID)
-
+	stmt, err := s.DB.Prepare("SELECT id, shop_id FROM apps_shops WHERE app_id = ?")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(appID)
+	if err != nil {
+		log.Println(err)
+		return ass, err
 	}
 	defer rows.Close()
 
