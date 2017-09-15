@@ -75,14 +75,14 @@ func (c *Command) BuildJSONStatisticFile() {
 	for _, appShop := range appShops {
 		shopIDs = append(shopIDs, appShop.ShopID)
 	}
-	log.Info("Count ShopIDs: ", len(shopIDs))
+	// log.Info("Count ShopIDs: ", len(shopIDs))
 
 	// get shops to get apikeys
 	shops, err := c.ShopService.GetByIDs(shopIDs)
 	if err != nil {
 		log.Errorf("%s: %s", "Get shops by ids failed", err)
 	}
-	log.Info("Count shops: ", len(shops))
+	// log.Info("Count shops: ", len(shops))
 
 	for _, shop := range shops {
 		apiKeys[shop.ID] = shop.APIKey
