@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"time"
@@ -26,10 +27,11 @@ import (
 )
 
 var (
-	appShopService *mysql.AppShopService
-	shopService    *mysql.ShopService
-	orderService   *mongo.OrderService
-	productService *mongo.ProductService
+	appShopService  *mysql.AppShopService
+	shopService     *mysql.ShopService
+	keyValueService *mysql.KeyValueSettingService
+	orderService    *mongo.OrderService
+	productService  *mongo.ProductService
 )
 
 func init() {
@@ -64,6 +66,7 @@ func main() {
 
 	appShopService = &mysql.AppShopService{DB: db}
 	shopService = &mysql.ShopService{DB: db}
+	keyValueService = &mysql.KeyValueSettingService{DB: db}
 	orderService = &mongo.OrderService{Session: session}
 	productService = &mongo.ProductService{Session: session, OrderService: orderService}
 
@@ -128,6 +131,14 @@ func handleMessage(message []byte) {
 		return
 	}
 
+	// check init
+	keyName := fmt.Sprintf("ccart_init_data_%d", msgData["app_shop_id"])
+	_, err = keyValueService.GetByKeyName(keyName)
+	if err == nil {
+		log.Infof("%d | key value existed", msgData["app_shop_id"])
+		return
+	}
+
 	appShop, err := appShopService.GetByID(msgData["app_shop_id"])
 	if err != nil {
 		log.Errorf("%s: %s", "Get app shop failed", err)
@@ -137,15 +148,6 @@ func handleMessage(message []byte) {
 	shop, err := shopService.GetByID(appShop.ShopID)
 	if err != nil {
 		log.Errorf("%s: %s", "Get shop failed", err)
-		return
-	}
-
-	fileName := base64.StdEncoding.EncodeToString([]byte(shop.APIKey))
-	filePath := viper.GetString("static.path") + "/rest/" + fileName + ".json"
-
-	// check file exist
-	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
-		log.Errorf("%d | stats file existed", shop.ID)
 		return
 	}
 
@@ -162,12 +164,18 @@ func handleMessage(message []byte) {
 		productStat.Data[strconv.Itoa(product.RefID)] = productService.GetDefaultStatisticsData(shop.ID, product.RefID)
 	}
 
+	fileName := base64.StdEncoding.EncodeToString([]byte(shop.APIKey))
+	filePath := viper.GetString("static.path") + "/rest/" + fileName + ".json"
+
 	err = ioutil.WriteFile(filePath, productStat.GetJSONData(), 0777)
-
-	log.Infof("%d | Create default data: %s", msgData["app_shop_id"], fileName)
-
 	if err != nil {
 		log.Errorf("%s: %s", "Write json data to file failed", err)
+	}
+
+	log.Infof("%d | Create default data: %s", msgData["app_shop_id"], fileName)
+	err = keyValueService.CreateKeyValue(keyName, "1")
+	if err != nil {
+		log.Errorf("%s: %s", "Create key value failed", err)
 	}
 }
 
