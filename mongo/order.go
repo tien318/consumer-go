@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"beeketing.com/beeketing-consumer-go"
+	"github.com/spf13/viper"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -20,7 +21,7 @@ func (s *OrderService) GetByID(id int) (*consumer.Order, error) {
 
 // CountByShopID lorem
 func (s *OrderService) CountByShopID(shopID int) (int, error) {
-	c := s.Session.DB("beeketing-platform").C("Order")
+	c := s.Session.DB(viper.GetString("mongodb.db")).C("Order")
 
 	count, err := c.Find(bson.M{"shopId": shopID}).Count()
 
@@ -29,7 +30,7 @@ func (s *OrderService) CountByShopID(shopID int) (int, error) {
 
 // CountByProductRefID lorem
 func (s *OrderService) CountByProductRefID(productRefID int) (int, error) {
-	c := s.Session.DB("beeketing-platform").C("Order")
+	c := s.Session.DB(viper.GetString("mongodb.db")).C("Order")
 
 	count, err := c.Find(bson.M{
 		"lineItems.productRefId": productRefID,
