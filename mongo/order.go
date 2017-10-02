@@ -32,9 +32,12 @@ func (s *OrderService) CountByShopID(shopID int) (int, error) {
 func (s *OrderService) CountByProductRefID(productRefID int) (int, error) {
 	c := s.Session.DB(viper.GetString("mongodb.db")).C("Order")
 
-	count, err := c.Find(bson.M{
-		"lineItems.productRefId": productRefID,
-	}).Count()
+	count, err := c.Find(bson.M{"lineItems": bson.M{"$elemMatch": bson.M{"productRefId": productRefID}}}).Count()
+	// fmt.Println(count, err)
+
+	// count, err := c.Find(bson.M{
+	// 	"lineItems.productRefId": productRefID,
+	// }).Count()
 
 	return count, err
 }
