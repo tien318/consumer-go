@@ -140,6 +140,15 @@ func handleMessage(message []byte) {
 		return
 	}
 
+	fileName := base64.StdEncoding.EncodeToString([]byte(shop.APIKey))
+	filePath := viper.GetString("static.path") + "/rest/" + fileName + ".json"
+
+	// check file exist
+	if _, err := os.Stat(filePath); !os.IsNotExist(err) {
+		log.Errorf("%d | stats file existed", shop.ID)
+		return
+	}
+
 	products, err := productService.GetByShopID(appShop.ShopID)
 	if err != nil {
 		log.Errorf("%s: %s", "Get products failed", err)
@@ -152,9 +161,6 @@ func handleMessage(message []byte) {
 	for _, product := range products {
 		productStat.Data[strconv.Itoa(product.RefID)] = productService.GetDefaultStatisticsData(shop.ID, product.RefID)
 	}
-
-	fileName := base64.StdEncoding.EncodeToString([]byte(shop.APIKey))
-	filePath := viper.GetString("static.path") + "/rest/" + fileName + ".json"
 
 	err = ioutil.WriteFile(filePath, productStat.GetJSONData(), 0777)
 
