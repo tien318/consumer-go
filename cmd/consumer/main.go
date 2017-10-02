@@ -128,10 +128,6 @@ func handleMessage(message []byte) {
 		return
 	}
 
-	log.Infof("%d | Wait 15 minutes", msgData["app_shop_id"])
-	time.Sleep(time.Minute * 15)
-	log.Infof("%d | Create default data", msgData["app_shop_id"])
-
 	appShop, err := appShopService.GetByID(msgData["app_shop_id"])
 	if err != nil {
 		log.Errorf("%s: %s", "Get app shop failed", err)
@@ -160,7 +156,7 @@ func handleMessage(message []byte) {
 
 	err = ioutil.WriteFile(filePath, productStat.GetJSONData(), 0777)
 
-	log.Info("Update json data:", fileName)
+	log.Infof("%d | Create default data: %s", msgData["app_shop_id"], fileName)
 
 	if err != nil {
 		log.Errorf("%s: %s", "Write json data to file failed", err)
