@@ -146,6 +146,8 @@ func handleMessage(message []byte) {
 		return
 	}
 
+	log.Infof("%d |Count Product: %d", msgData["app_shop_id"], len(products))
+
 	productStat := statistic.NewProductStat()
 	for _, product := range products {
 		productStat.Data[strconv.Itoa(product.RefID)] = productService.GetDefaultStatisticsData(product.RefID)
