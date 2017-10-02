@@ -1,9 +1,10 @@
 package mongo
 
 import (
-	"log"
 	"math/rand"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"beeketing.com/beeketing-consumer-go"
 	"github.com/spf13/viper"
@@ -44,7 +45,8 @@ func (s *ProductService) GetDefaultStatisticsData(refID int) []int {
 	purchase, err := s.OrderService.CountByProductRefID(refID)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Errorf("%s: %s", "Count Order by product ref_id failed", err)
+		return []int{0, 0, 0}
 	}
 
 	rand.Seed(time.Now().UnixNano())
