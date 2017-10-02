@@ -139,6 +139,11 @@ func handleMessage(message []byte) {
 		return
 	}
 
+	err = keyValueService.CreateKeyValue(keyName, "1")
+	if err != nil {
+		log.Errorf("%s: %s", "Create key value failed", err)
+	}
+
 	appShop, err := appShopService.GetByID(msgData["app_shop_id"])
 	if err != nil {
 		log.Errorf("%s: %s", "Get app shop failed", err)
@@ -173,10 +178,6 @@ func handleMessage(message []byte) {
 	}
 
 	log.Infof("%d | Create default data: %s", msgData["app_shop_id"], fileName)
-	err = keyValueService.CreateKeyValue(keyName, "1")
-	if err != nil {
-		log.Errorf("%s: %s", "Create key value failed", err)
-	}
 }
 
 func failOnError(err error, msg string) {
