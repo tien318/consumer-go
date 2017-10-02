@@ -150,7 +150,7 @@ func handleMessage(message []byte) {
 
 	productStat := statistic.NewProductStat()
 	for _, product := range products {
-		productStat.Data[strconv.Itoa(product.RefID)] = productService.GetDefaultStatisticsData(product.RefID)
+		productStat.Data[strconv.Itoa(product.RefID)] = productService.GetDefaultStatisticsData(shop.ID, product.RefID)
 	}
 
 	fileName := base64.StdEncoding.EncodeToString([]byte(shop.APIKey))

@@ -38,11 +38,11 @@ func (s *ProductService) GetByShopID(id int) ([]*consumer.Product, error) {
 }
 
 // GetDefaultStatisticsData lorem
-func (s *ProductService) GetDefaultStatisticsData(refID int) []int {
+func (s *ProductService) GetDefaultStatisticsData(shopID int, refID int) []int {
 	var view, addToCart, purchase int = 0, 0, 0
 
 	// query to mongo to get count order
-	purchase, err := s.OrderService.CountByProductRefID(refID)
+	purchase, err := s.OrderService.CountByProductRefID(shopID, refID)
 
 	if err != nil {
 		log.Errorf("%s: %s", "Count Order by product ref_id failed", err)

@@ -150,7 +150,7 @@ func (c *Command) BuildShopStatisticJSONFile(appShop *consumer.AppShop) {
 		if _, ok := productStat.Data[fields[0]]; !ok {
 			refID, _ := strconv.Atoi(fields[0])
 
-			productStat.Data[fields[0]] = c.ProductService.GetDefaultStatisticsData(refID)
+			productStat.Data[fields[0]] = c.ProductService.GetDefaultStatisticsData(appShop.ShopID, refID)
 		}
 
 		count, _ := strconv.Atoi(val)
