@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"beeketing.com/beeketing-consumer-go"
+	"github.com/spf13/viper"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -28,7 +29,7 @@ func (s *ProductService) GetByID(id int) (*consumer.Product, error) {
 func (s *ProductService) GetByShopID(id int) ([]*consumer.Product, error) {
 	var products []*consumer.Product
 
-	c := s.Session.DB("beeketing-platform").C("Product")
+	c := s.Session.DB(viper.GetString("mongodb.db")).C("Product")
 
 	err := c.Find(bson.M{"shopId": id}).All(&products)
 
