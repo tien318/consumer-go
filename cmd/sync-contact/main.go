@@ -26,11 +26,11 @@ func main() {
 	initMysql()
 	defer db.Close()
 
-	emails := getEmails(9561507)
+	emails := getEmails(9652158)
 
 	for _, email := range emails {
 		_, err := http.PostForm("https://a.klaviyo.com/api/v1/list/LrnK26/members", url.Values{
-			"api_key":       {"pk_56a51680ebf1a3d5cc93ba6a82ecfe7ecb"},
+			"api_key":       {"pk_4a8b8fc1d4e9bdf81d2bf218c93a10ce2f"},
 			"email":         {email},
 			"confirm_optin": {"false"},
 		})
