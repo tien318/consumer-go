@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"fmt"
 	"log"
@@ -28,8 +29,8 @@ func main() {
 
 	emails := getEmails(9652158)
 
-	for _, email := range emails {
-		_, err := http.PostForm("https://a.klaviyo.com/api/v1/list/LrnK26/members", url.Values{
+	for i, email := range emails {
+		resp, err := http.PostForm("https://a.klaviyo.com/api/v1/list/LrnK26/members", url.Values{
 			"api_key":       {"pk_4a8b8fc1d4e9bdf81d2bf218c93a10ce2f"},
 			"email":         {email},
 			"confirm_optin": {"false"},
@@ -38,8 +39,11 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
 
-		fmt.Println(email)
+		fmt.Println(i, email)
+		fmt.Println(buf.String())
 	}
 }
 
