@@ -19,4 +19,5 @@ type WebNotification struct {
 
 type WebNotificationService interface {
 	Add(wn *WebNotification) (int64, error)
+	GetNotificationToSend() ([]*WebNotification, error)
 }

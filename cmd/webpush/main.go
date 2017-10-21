@@ -1,39 +1,57 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"log"
-
-	webpush "github.com/sherclockholmes/webpush-go"
+	consumer "beeketing.com/beeketing-consumer-go"
+	"beeketing.com/beeketing-consumer-go/config"
+	"beeketing.com/beeketing-consumer-go/mysql"
+	"beeketing.com/beeketing-consumer-go/webpush"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/robfig/cron"
+	log "github.com/sirupsen/logrus"
 )
 
-const (
-	publicKey       = "BMtBecN46lJbB-97vhFUqVfYCA5x8GkepTnVLt699gOmIuiUlYXNEdlDjKOcuoUctvkldPH9fwKs6NGG53SaQAY"
-	vapidPrivateKey = "pZjKhkkDZl19i-CBkPQlG1lmfwyvJEjSmUzGFO1nrkA"
+func init() {
+	config.Load()
+}
+
+var (
+	notificationService consumer.WebNotificationService
 )
 
 func main() {
-	fmt.Println("Web push")
-	fmt.Println("Public key:", publicKey)
-	fmt.Println("Private key:", vapidPrivateKey)
-
-	subJSON := `{"endpoint":"https://fcm.googleapis.com/fcm/send/doq7MpV4bOA:APA91bFfor-scOf9KhXBZZc3IGnO27cYMRbX_gfjoH_FbNUd8cogiOPy9K1o9ZelPfFt97FbausAUprNIx8ZxSWSAIpsMr-wKQsmwUWcQ9tOc84ZlmBnA24c8T9r5dJOFqZzcm9SfeIC","expirationTime":null,"keys":{"p256dh":"BEr7iytbtrOYmo3ulN5Kj7l_C4MdpDSzMQ3-38KSiY19N7lj8lDyVwd6pAZWQEK9lx66ahuhVqciy7Tvc1ST2yQ=","auth":"cNgOz9EKuoIbZdSgoTjcQg=="}}`
-
-	// Decode subscription
-	s := webpush.Subscription{}
-	if err := json.NewDecoder(bytes.NewBufferString(subJSON)).Decode(&s); err != nil {
-		log.Fatal(err)
-	}
-
-	// Send Notification
-	_, err := webpush.SendNotification([]byte("Test"), &s, &webpush.Options{
-		Subscriber:      "<EMAIL@EXAMPLE.COM>",
-		VAPIDPrivateKey: vapidPrivateKey,
-	})
+	db, err := mysql.NewMysql()
+	defer db.Close()
 
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
+	}
+
+	notificationService = &mysql.WebNotificationService{DB: db}
+
+	c := cron.New()
+
+	log.Info("Run Send notification every 1m")
+
+	c.AddFunc("@every 5s", func() {
+		run()
+	})
+
+	c.Start()
+
+	select {}
+}
+
+func run() {
+	log.Info("Send Notification")
+
+	notifications, err := notificationService.GetNotificationToSend()
+	if err != nil {
+		log.Errorf("%s: %s", "Get notification failed", err)
+		return
+	}
+	log.Info("Count Notification: ", len(notifications))
+
+	for _, notification := range notifications {
+		go webpush.Send(notification.Subscription, notification.Data)
 	}
 }

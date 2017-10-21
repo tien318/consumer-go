@@ -27,3 +27,38 @@ func (s *WebNotificationService) Add(n *consumer.WebNotification) (int64, error)
 
 	return res.LastInsertId()
 }
+
+func (s *WebNotificationService) GetNotificationToSend() ([]*consumer.WebNotification, error) {
+	notifications := make([]*consumer.WebNotification, 0)
+	now := time.Now()
+
+	query := `
+	SELECT subscription, data
+	FROM web_notifications
+	WHERE send = 0 AND send_at <= ?`
+
+	rows, err := s.DB.Query(query, now)
+
+	if err != nil {
+		return notifications, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		n := &consumer.WebNotification{}
+
+		err := rows.Scan(&n.Subscription, &n.Data)
+
+		if err != nil {
+			return notifications, err
+		}
+
+		notifications = append(notifications, n)
+	}
+
+	if err = rows.Err(); err != nil {
+		return notifications, err
+	}
+
+	return notifications, nil
+}
