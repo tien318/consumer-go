@@ -52,6 +52,12 @@ func run() {
 	log.Info("Count Notification: ", len(notifications))
 
 	for _, notification := range notifications {
-		go webpush.Send(notification.Subscription, notification.Data)
+		go send(notification)
 	}
+}
+
+func send(noti *consumer.WebNotification) {
+	notificationService.UpdateSent(noti)
+
+	webpush.Send(noti.Subscription, noti.Data)
 }

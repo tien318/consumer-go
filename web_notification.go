@@ -5,6 +5,7 @@ import (
 )
 
 type WebNotification struct {
+	ID           int64
 	ShopID       int64
 	ContactRefID string
 	CartToken    string
@@ -20,4 +21,5 @@ type WebNotification struct {
 type WebNotificationService interface {
 	Add(wn *WebNotification) (int64, error)
 	GetNotificationToSend() ([]*WebNotification, error)
+	UpdateSent(wn *WebNotification) error
 }

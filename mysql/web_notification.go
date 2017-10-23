@@ -33,7 +33,7 @@ func (s *WebNotificationService) GetNotificationToSend() ([]*consumer.WebNotific
 	now := time.Now()
 
 	query := `
-	SELECT subscription, data
+	SELECT id, subscription, data
 	FROM web_notifications
 	WHERE send = 0 AND send_at <= ?`
 
@@ -47,7 +47,7 @@ func (s *WebNotificationService) GetNotificationToSend() ([]*consumer.WebNotific
 	for rows.Next() {
 		n := &consumer.WebNotification{}
 
-		err := rows.Scan(&n.Subscription, &n.Data)
+		err := rows.Scan(&n.ID, &n.Subscription, &n.Data)
 
 		if err != nil {
 			return notifications, err
@@ -61,4 +61,15 @@ func (s *WebNotificationService) GetNotificationToSend() ([]*consumer.WebNotific
 	}
 
 	return notifications, nil
+}
+
+func (s *WebNotificationService) UpdateSent(wn *consumer.WebNotification) error {
+	query := `
+	UPDATE web_notifications
+	SET send = 1
+	WHERE id = ?`
+
+	_, err := s.DB.Exec(query, wn.ID)
+
+	return err
 }
