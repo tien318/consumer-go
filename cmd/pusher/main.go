@@ -68,7 +68,7 @@ func main() {
 	c := cron.New()
 
 	log.Info("run every 15m")
-	c.AddFunc("@every 5s", func() {
+	c.AddFunc("@every 15m", func() {
 		run()
 	})
 
@@ -81,8 +81,8 @@ func run() {
 	log.Info("Start Fetch Abandoned Checkout from Shopify")
 
 	// init time
-	updatedAtMin := time.Now().Add(-time.Hour * 100).Format(time.RFC3339)
-	updatedAtMax := time.Now().Add(time.Hour * 1).Format(time.RFC3339)
+	updatedAtMin := time.Now().Add(-time.Minute * 30).Format(time.RFC3339)
+	updatedAtMax := time.Now().Add(-time.Minute * 15).Format(time.RFC3339)
 	log.Infof("Time: %s - %s", updatedAtMin, updatedAtMax)
 
 	// get appshops
