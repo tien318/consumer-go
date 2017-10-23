@@ -60,8 +60,13 @@ func main() {
 	webNotificationService = &mysql.WebNotificationService{DB: db}
 
 	app, err = appService.GetByAppCode(appCode)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		log.Errorf("%s: %s", "Get App failed", err)
+		return
+	}
+
+	if err == sql.ErrNoRows {
+		log.Info("App Pusher NOT FOUND")
 		return
 	}
 
