@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -70,6 +71,8 @@ func main() {
 		return
 	}
 
+	// run()
+
 	c := cron.New()
 
 	log.Info("run every 5m")
@@ -88,6 +91,8 @@ func run() {
 	// init time
 	updatedAtMin := time.Now().Add(-time.Minute * 20).Format(time.RFC3339)
 	updatedAtMax := time.Now().Add(-time.Minute * 15).Format(time.RFC3339)
+	// updatedAtMin := time.Now().Add(-time.Hour * 20000).Format(time.RFC3339)
+	// updatedAtMax := time.Now().Add(time.Minute * 15).Format(time.RFC3339)
 	log.Infof("Time: %s - %s", updatedAtMin, updatedAtMax)
 
 	// get appshops
@@ -164,7 +169,15 @@ func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updat
 			wn.ContactRefID = sub.ContactRefID
 			wn.Send = 0
 			wn.Campaign = "pusher_abandoned_checkout"
-			wn.Data = ""
+			dataObj := struct {
+				Title string `json:"title"`
+				Body  string `json:"body"`
+			}{
+				Title: setting.Subject,
+				Body:  setting.Message,
+			}
+			data, _ := json.Marshal(dataObj)
+			wn.Data = string(data)
 
 			if setting.KeyString == "pusher_cart_reminder_15_mins" {
 				wn.SendAt = time.Now().Add(time.Minute * 15)

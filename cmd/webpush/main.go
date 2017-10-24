@@ -32,23 +32,24 @@ func main() {
 
 	log.Info("Run Send notification every 1m")
 
-	c.AddFunc("@every 5s", func() {
+	c.AddFunc("@every 1m", func() {
 		run()
 	})
 
 	c.Start()
 
+	// run()
+
 	select {}
 }
 
 func run() {
-	log.Info("Send Notification")
-
 	notifications, err := notificationService.GetNotificationToSend()
 	if err != nil {
 		log.Errorf("%s: %s", "Get notification failed", err)
 		return
 	}
+
 	log.Info("Count Notification: ", len(notifications))
 
 	for _, notification := range notifications {
