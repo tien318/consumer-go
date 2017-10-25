@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"beeketing.com/beeketing-consumer-go/apps/pusher"
@@ -169,12 +170,16 @@ func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updat
 			wn.ContactRefID = sub.ContactRefID
 			wn.Send = 0
 			wn.Campaign = "pusher_abandoned_checkout"
+
+			title := strings.Replace(setting.Subject, "{store_name}", shop.Name, -1)
+			body := strings.Replace(setting.Subject, "{store_name}", shop.Name, -1)
+
 			dataObj := struct {
 				Title string `json:"title"`
 				Body  string `json:"body"`
 			}{
-				Title: setting.Subject,
-				Body:  setting.Message,
+				Title: title,
+				Body:  body,
 			}
 			data, _ := json.Marshal(dataObj)
 			wn.Data = string(data)
