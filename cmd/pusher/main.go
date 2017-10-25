@@ -92,9 +92,7 @@ func run() {
 	// init time
 	updatedAtMin := time.Now().Add(-time.Minute * 60).Format(time.RFC3339)
 	updatedAtMax := time.Now().Add(-time.Minute * 0).Format(time.RFC3339)
-	// updatedAtMin := time.Now().Add(-time.Hour * 20000).Format(time.RFC3339)
-	// updatedAtMax := time.Now().Add(time.Minute * 15).Format(time.RFC3339)
-	log.Infof("Time: %s - %s", updatedAtMin, updatedAtMax)
+	// log.Infof("Time: %s - %s", updatedAtMin, updatedAtMax)
 
 	// get appshops
 	appShops, err := appShopService.GetByAppID(app.ID)
@@ -102,7 +100,8 @@ func run() {
 		log.Errorf("%s: %s", "Get App Shops failed", err)
 		return
 	}
-	log.Info("Total AppShops: ", len(appShops))
+
+	// log.Info("Total AppShops: ", len(appShops))
 	if len(appShops) == 0 {
 		return
 	}
@@ -134,18 +133,19 @@ func run() {
 
 func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updatedAtMin, updatedAtMax string) {
 	log.Info(">> Shop ID: ", shop.ID)
+
 	// setting
-	log.Info("Get Setting")
+	// log.Info("Get Setting")
 	settings, err := getSettings(shop)
 	if err != nil {
 		log.Errorf("%s: %s", "Get settings failed", err)
 		return
 	}
-	log.Info("Count enable settings:", len(settings))
+	// log.Info("Count enable settings:", len(settings))
 
 	// get checkout
 	checkouts := fetchAbandonedCheckouts(shop, appShop, updatedAtMin, updatedAtMax)
-	log.Info("Count checkouts:", len(checkouts))
+	// log.Info("Count checkouts:", len(checkouts))
 
 	countNotification := 0
 	for _, checkout := range checkouts {
@@ -215,6 +215,7 @@ func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updat
 			}
 		}
 	}
+
 	log.Info("Count Notifications:", countNotification)
 }
 
