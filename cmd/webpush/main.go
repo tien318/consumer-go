@@ -58,7 +58,7 @@ func run() {
 }
 
 func send(noti *consumer.WebNotification) {
-	notificationService.UpdateSent(noti)
+	// notificationService.UpdateSent(noti)
 
 	webpush.Send(noti.Subscription, noti.Data)
 }

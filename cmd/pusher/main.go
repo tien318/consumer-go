@@ -76,8 +76,8 @@ func main() {
 
 	c := cron.New()
 
-	log.Info("run every 5m")
-	c.AddFunc("@every 5m", func() {
+	log.Info("run every 1m")
+	c.AddFunc("@every 1m", func() {
 		run()
 	})
 
@@ -90,8 +90,8 @@ func run() {
 	log.Info("Start Fetch Abandoned Checkout from Shopify")
 
 	// init time
-	updatedAtMin := time.Now().Add(-time.Minute * 20).Format(time.RFC3339)
-	updatedAtMax := time.Now().Add(-time.Minute * 15).Format(time.RFC3339)
+	updatedAtMin := time.Now().Add(-time.Minute * 60).Format(time.RFC3339)
+	updatedAtMax := time.Now().Add(-time.Minute * 0).Format(time.RFC3339)
 	// updatedAtMin := time.Now().Add(-time.Hour * 20000).Format(time.RFC3339)
 	// updatedAtMax := time.Now().Add(time.Minute * 15).Format(time.RFC3339)
 	log.Infof("Time: %s - %s", updatedAtMin, updatedAtMax)
@@ -173,14 +173,29 @@ func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updat
 
 			title := strings.Replace(setting.Subject, "{store_name}", shop.Name, -1)
 			body := strings.Replace(setting.Subject, "{store_name}", shop.Name, -1)
+			url := "http://" + shop.Domain + "/cart"
+
+			actions := make([]map[string]string, 0)
+			for _, button := range setting.Buttons {
+				action := make(map[string]string)
+				action["title"] = button.Text
+				action["action"] = button.Url
+
+				actions = append(actions, action)
+			}
 
 			dataObj := struct {
-				Title string `json:"title"`
-				Body  string `json:"body"`
+				Title   string              `json:"title"`
+				Body    string              `json:"body"`
+				URL     string              `json:"urrl"`
+				Actions []map[string]string `json:"actions"`
 			}{
-				Title: title,
-				Body:  body,
+				Title:   title,
+				Body:    body,
+				URL:     url,
+				Actions: actions,
 			}
+
 			data, _ := json.Marshal(dataObj)
 			wn.Data = string(data)
 
@@ -242,7 +257,7 @@ func fetchAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, upd
 	for page := 1; ; page++ {
 		// call api
 		url := "https://" + shop.Domain + "/admin/checkouts.json?access_token=" + appShop.TokenKey + "&updated_at_min=" + updatedAtMin + "&updated_at_max=" + updatedAtMax + "&limit=250&page=" + strconv.Itoa(page)
-
+		log.Info(url)
 		resp, err := http.Get(url)
 		if err != nil {
 			log.Errorf("%s: %s", url, err)
