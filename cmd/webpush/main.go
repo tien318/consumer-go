@@ -11,6 +11,7 @@ import (
 	"beeketing.com/beeketing-consumer-go/webpush"
 	goredis "github.com/go-redis/redis"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/robfig/cron"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	mgo "gopkg.in/mgo.v2"
@@ -50,17 +51,17 @@ func main() {
 	notificationService = &mysql.WebNotificationService{DB: db}
 	statisticService = mongo.NewStatisticService(session)
 
-	// c := cron.New()
+	c := cron.New()
 
-	// log.Info("Run Send notification every 1m")
+	log.Info("Run Send notification every 1m")
 
-	// c.AddFunc("@every 1m", func() {
-	// 	run()
-	// })
+	c.AddFunc("@every 1m", func() {
+		run()
+	})
 
-	// c.Start()
+	c.Start()
 
-	run()
+	// run()
 
 	select {}
 }
