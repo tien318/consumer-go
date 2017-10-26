@@ -11,6 +11,7 @@ type Statistic struct {
 	Type     string           `bson:"type,omitempty"`
 	Data     map[string]int64 `bson:"data,omitempty"`
 	TimeType string           `bson:"timeType,omitempty"`
+	Time     int64            `bson:"time",omitempty`
 }
 
 type StatisticService interface {

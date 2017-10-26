@@ -29,7 +29,7 @@ var (
 func init() {
 	config.Load()
 
-	redis.Init()
+	redis.InitPersistentRedis()
 }
 
 func main() {
@@ -91,7 +91,7 @@ func send(noti *consumer.WebNotification) {
 func updateStatistic(shopID int64, timeType string) {
 	// params
 	statisticType := "shop"
-	t := time.Now().UTC()
+	t := time.Now()
 	year, month, day := t.Date()
 	time := time.Date(year, month, day, 0, 0, 0, 0, t.Location())
 
@@ -110,6 +110,7 @@ func updateStatistic(shopID int64, timeType string) {
 			Type:     statisticType,
 			Data:     make(map[string]int64),
 			TimeType: timeType,
+			Time:     time.Unix(),
 		}
 
 		err = statisticService.Add(stat)
@@ -128,7 +129,7 @@ func updateStatistic(shopID int64, timeType string) {
 }
 
 func getNewStatisticID() int64 {
-	id, err := redis.Client.Get(cacheKey).Int64()
+	id, err := redis.ClientPersistent.Get(cacheKey).Int64()
 
 	if err == goredis.Nil {
 		id = startStatisticID
@@ -138,7 +139,7 @@ func getNewStatisticID() int64 {
 		id++
 	}
 
-	err = redis.Client.Set(cacheKey, id, 0).Err()
+	err = redis.ClientPersistent.Set(cacheKey, id, 0).Err()
 
 	if err != nil {
 		log.Fatal(err)

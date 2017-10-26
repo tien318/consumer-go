@@ -33,7 +33,7 @@ func (s *StatisticService) Get(shopID int64, statisticType string, refID int64, 
 	}
 
 	if timeType != "total" {
-		query["time"] = time
+		query["time"] = time.Unix()
 	}
 
 	err := s.Collection.Find(query).One(&stat)
