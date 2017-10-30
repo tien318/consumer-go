@@ -173,7 +173,7 @@ func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updat
 
 			title := strings.Replace(setting.Subject, "{store_name}", shop.Name, -1)
 			body := strings.Replace(setting.Subject, "{store_name}", shop.Name, -1)
-			url := "http://" + shop.Domain + "/cart"
+			url := "http://" + shop.Domain + "/cart?pusher=1"
 
 			actions := make([]map[string]string, 0)
 			for _, button := range setting.Buttons {
@@ -187,7 +187,7 @@ func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updat
 			dataObj := struct {
 				Title   string              `json:"title"`
 				Body    string              `json:"body"`
-				URL     string              `json:"urrl"`
+				URL     string              `json:"url"`
 				Actions []map[string]string `json:"actions"`
 			}{
 				Title:   title,
