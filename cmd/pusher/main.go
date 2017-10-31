@@ -173,6 +173,14 @@ func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updat
 
 			title := strings.Replace(setting.Subject, "{store_name}", shop.Name, -1)
 			body := strings.Replace(setting.Message, "{store_name}", shop.Name, -1)
+
+			if len(checkout.LineItems) > 0 {
+				title = strings.Replace(setting.Subject, "{item_name}", checkout.LineItems[0].Title, -1)
+				title = strings.Replace(setting.Subject, "{price}", checkout.LineItems[0].Price, -1)
+				body = strings.Replace(setting.Subject, "{item_name}", checkout.LineItems[0].Title, -1)
+				body = strings.Replace(setting.Subject, "{price}", checkout.LineItems[0].Price, -1)
+			}
+
 			url := "http://" + shop.Domain + "/cart?pusher=1"
 
 			actions := make([]map[string]string, 0)
