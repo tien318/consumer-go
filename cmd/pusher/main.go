@@ -172,7 +172,7 @@ func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updat
 			wn.Campaign = "pusher_abandoned_checkout"
 
 			title := strings.Replace(setting.Subject, "{store_name}", shop.Name, -1)
-			body := strings.Replace(setting.Subject, "{store_name}", shop.Name, -1)
+			body := strings.Replace(setting.Message, "{store_name}", shop.Name, -1)
 			url := "http://" + shop.Domain + "/cart?pusher=1"
 
 			actions := make([]map[string]string, 0)
