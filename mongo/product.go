@@ -20,10 +20,14 @@ type ProductService struct {
 }
 
 // GetByID lorem
-func (s *ProductService) GetByID(id int) (*consumer.Product, error) {
+func (s *ProductService) GetByID(id int64) (*consumer.Product, error) {
 	var product *consumer.Product
 
-	return product, nil
+	c := s.Session.DB(viper.GetString("mongodb.db")).C("Product")
+
+	err := c.Find(bson.M{"refId": id}).One(&product)
+
+	return product, err
 }
 
 // GetByShopID lorem

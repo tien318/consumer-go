@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"beeketing.com/beeketing-consumer-go/apps/pusher"
+	"beeketing.com/beeketing-consumer-go/mongo"
+	mgo "gopkg.in/mgo.v2"
 
 	"beeketing.com/beeketing-consumer-go"
 	"beeketing.com/beeketing-consumer-go/config"
@@ -19,6 +21,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/robfig/cron"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -33,6 +36,7 @@ var (
 	subscriptionService    consumer.SubscriptionService
 	settingService         consumer.SettingService
 	webNotificationService consumer.WebNotificationService
+	productService         consumer.ProductService
 	keyStrings             = []string{
 		"pusher_cart_reminder_15_mins",
 		"pusher_cart_reminder_1_hour",
@@ -54,12 +58,19 @@ func main() {
 		panic(err)
 	}
 
+	session, err := mgo.Dial(viper.GetString("mongodb.url"))
+	if err != nil {
+		log.Fatalf("%s: %s", "Failed to connect to mongo", err)
+	}
+	defer session.Close()
+
 	appService = &mysql.AppService{DB: db}
 	appShopService = &mysql.AppShopService{DB: db}
 	shopService = &mysql.ShopService{DB: db}
 	subscriptionService = &mysql.SubscriptionService{DB: db}
 	settingService = &mysql.SettingService{DB: db}
 	webNotificationService = &mysql.WebNotificationService{DB: db}
+	productService = &mongo.ProductService{Session: session}
 
 	app, err = appService.GetByAppCode(appCode)
 	if err != nil && err != sql.ErrNoRows {
@@ -160,6 +171,15 @@ func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updat
 			continue
 		}
 
+		var icon = ""
+
+		if len(checkout.LineItems) > 0 {
+			product, err := productService.GetByID(checkout.LineItems[0].ProductId)
+			if err == nil {
+				icon = product.ImageSourceURL
+			}
+		}
+
 		// webpush.Send(sub.Subscription)
 		for _, setting := range settings {
 			wn := &consumer.WebNotification{}
@@ -196,11 +216,13 @@ func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updat
 				Title   string              `json:"title"`
 				Body    string              `json:"body"`
 				URL     string              `json:"url"`
+				Icon    string              `json:"icon"`
 				Actions []map[string]string `json:"actions"`
 			}{
 				Title:   title,
 				Body:    body,
 				URL:     url,
+				Icon:    icon,
 				Actions: actions,
 			}
 
