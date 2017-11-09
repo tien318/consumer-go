@@ -201,7 +201,7 @@ func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updat
 				body = strings.Replace(body, "{price}", checkout.LineItems[0].Price, -1)
 			}
 
-			url := "http://" + shop.Domain + "/cart?pusher=1"
+			url := "http://" + shop.Domain + "/cart"
 
 			actions := make([]map[string]string, 0)
 			for _, button := range setting.Buttons {
