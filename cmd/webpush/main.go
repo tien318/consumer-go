@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"time"
 
 	consumer "beeketing.com/beeketing-consumer-go"
@@ -83,7 +84,34 @@ func run() {
 func send(noti *consumer.WebNotification) {
 	notificationService.UpdateSent(noti)
 
-	webpush.Send(noti.Subscription, noti.Data)
+	var sub map[string]interface{}
+	err := json.Unmarshal([]byte(noti.Subscription), &sub)
+
+	if err == nil {
+		webpush.Send(noti.Subscription, noti.Data)
+	} else {
+		var data map[string]interface{}
+		err = json.Unmarshal([]byte(noti.Data), &data)
+		if err == nil {
+			var title, body, url string
+
+			if _, ok := data["title"]; ok {
+				title = data["title"].(string)
+			}
+
+			if _, ok := data["body"]; ok {
+				body = data["body"].(string)
+			}
+
+			if _, ok := data["url"]; ok {
+				url = data["url"].(string)
+			}
+
+			log.Info(title, body, url)
+
+			webpush.SendApns(noti.Subscription, title, body, url)
+		}
+	}
 
 	updateStatistic(noti.ShopID, "day")
 	updateStatistic(noti.ShopID, "total")
