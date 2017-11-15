@@ -18,6 +18,8 @@ cmd/consumer/consumer
 cmd/cron/cron
 cmd/web/web
 cmd/logger/logger
+cmd/webpush/webpush
+cmd/pusher/pusher
 
 # config file
 config/config.json

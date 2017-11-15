@@ -177,6 +177,8 @@ func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updat
 			product, err := productService.GetByID(checkout.LineItems[0].ProductId)
 			if err == nil {
 				icon = product.ImageSourceURL
+				icon = strings.Replace(icon, ".jpg", "_small.jpg", -1)
+				icon = strings.Replace(icon, ".png", "_small.png", -1)
 			}
 		}
 
