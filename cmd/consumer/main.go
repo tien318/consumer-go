@@ -13,6 +13,7 @@ import (
 
 	mgo "gopkg.in/mgo.v2"
 
+	consumer "beeketing.com/beeketing-consumer-go"
 	"beeketing.com/beeketing-consumer-go/mongo"
 
 	log "github.com/sirupsen/logrus"
@@ -27,11 +28,11 @@ import (
 )
 
 var (
-	appShopService  *mysql.AppShopService
-	shopService     *mysql.ShopService
-	keyValueService *mysql.KeyValueSettingService
-	orderService    *mongo.OrderService
-	productService  *mongo.ProductService
+	appShopService  consumer.AppShopService
+	shopService     consumer.ShopService
+	keyValueService consumer.KeyValueSettingService
+	orderService    consumer.OrderService
+	productService  consumer.ProductService
 )
 
 func init() {
@@ -67,8 +68,8 @@ func main() {
 	appShopService = &mysql.AppShopService{DB: db}
 	shopService = &mysql.ShopService{DB: db}
 	keyValueService = &mysql.KeyValueSettingService{DB: db}
-	orderService = &mongo.OrderService{Session: session}
-	productService = &mongo.ProductService{Session: session, OrderService: orderService}
+	orderService = mongo.NewOrderService(session)
+	productService = mongo.NewProductService(session, orderService)
 
 	conn, err := amqp.Dial(viper.GetString("rabbitmq.url"))
 	failOnError(err, "Failed to connect to RabbitMQ")

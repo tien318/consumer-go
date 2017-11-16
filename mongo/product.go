@@ -16,16 +16,24 @@ import (
 type ProductService struct {
 	Session *mgo.Session
 
-	OrderService *OrderService
+	OrderService consumer.OrderService
+
+	Collection *mgo.Collection
+}
+
+func NewProductService(session *mgo.Session, orderService consumer.OrderService) *ProductService {
+	s := &ProductService{Session: session, OrderService: orderService}
+
+	s.Collection = s.Session.DB(viper.GetString("mongodb.db")).C("Product")
+
+	return s
 }
 
 // GetByID lorem
 func (s *ProductService) GetByID(id int64) (*consumer.Product, error) {
 	var product *consumer.Product
 
-	c := s.Session.DB(viper.GetString("mongodb.db")).C("Product")
-
-	err := c.Find(bson.M{"refId": id}).One(&product)
+	err := s.Collection.Find(bson.M{"refId": id}).One(&product)
 
 	return product, err
 }
@@ -34,9 +42,7 @@ func (s *ProductService) GetByID(id int64) (*consumer.Product, error) {
 func (s *ProductService) GetByShopID(id int) ([]*consumer.Product, error) {
 	var products []*consumer.Product
 
-	c := s.Session.DB(viper.GetString("mongodb.db")).C("Product")
-
-	err := c.Find(bson.M{"shopId": id}).All(&products)
+	err := s.Collection.Find(bson.M{"shopId": id}).All(&products)
 
 	return products, err
 }

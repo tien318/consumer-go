@@ -33,7 +33,7 @@ func (s *WebNotificationService) GetNotificationToSend() ([]*consumer.WebNotific
 	now := time.Now()
 
 	query := `
-	SELECT id, shop_id, subscription, data
+	SELECT id, shop_id, cart_token, subscription, data
 	FROM web_notifications
 	WHERE send = 0 AND send_at <= ?`
 
@@ -47,7 +47,7 @@ func (s *WebNotificationService) GetNotificationToSend() ([]*consumer.WebNotific
 	for rows.Next() {
 		n := &consumer.WebNotification{}
 
-		err := rows.Scan(&n.ID, &n.ShopID, &n.Subscription, &n.Data)
+		err := rows.Scan(&n.ID, &n.ShopID, &n.CartToken, &n.Subscription, &n.Data)
 
 		if err != nil {
 			return notifications, err

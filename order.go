@@ -10,4 +10,5 @@ type OrderService interface {
 	GetByID(id int) (*Order, error)
 	CountByShopID(shopID int) (int, error)
 	CountByProductRefID(shopID int, productID int) (int, error)
+	GetByCartToken(cartToken string) (*Order, error)
 }

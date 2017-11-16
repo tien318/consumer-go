@@ -55,8 +55,8 @@ func main() {
 	keyValueSettingService := &mysql.KeyValueSettingService{DB: db}
 	appShopService := &mysql.AppShopService{DB: db}
 	shopService := &mysql.ShopService{DB: db}
-	orderService := &mongo.OrderService{Session: session}
-	productService := &mongo.ProductService{Session: session, OrderService: orderService}
+	orderService := mongo.NewOrderService(session)
+	productService := mongo.NewProductService(session, orderService)
 
 	// Command
 	cmd := &console.Command{

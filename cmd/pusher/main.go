@@ -70,7 +70,7 @@ func main() {
 	subscriptionService = &mysql.SubscriptionService{DB: db}
 	settingService = &mysql.SettingService{DB: db}
 	webNotificationService = &mysql.WebNotificationService{DB: db}
-	productService = &mongo.ProductService{Session: session}
+	productService = mongo.NewProductService(session, nil)
 
 	app, err = appService.GetByAppCode(appCode)
 	if err != nil && err != sql.ErrNoRows {

@@ -26,6 +26,7 @@ const (
 var (
 	notificationService consumer.WebNotificationService
 	statisticService    consumer.StatisticService
+	orderService        consumer.OrderService
 )
 
 func init() {
@@ -51,6 +52,7 @@ func main() {
 
 	notificationService = &mysql.WebNotificationService{DB: db}
 	statisticService = mongo.NewStatisticService(session)
+	orderService = mongo.NewOrderService(session)
 
 	c := cron.New()
 
@@ -77,7 +79,13 @@ func run() {
 	log.Info("Count Notification: ", len(notifications))
 
 	for _, notification := range notifications {
-		go send(notification)
+		_, err := orderService.GetByCartToken(notification.CartToken)
+		log.Errorf("%s: %s", "get order by cart token failed", err)
+
+		if err == mgo.ErrNotFound {
+			log.Info("Send Notification")
+			go send(notification)
+		}
 	}
 }
 
