@@ -80,10 +80,8 @@ func run() {
 
 	for _, notification := range notifications {
 		_, err := orderService.GetByCartToken(notification.CartToken)
-		log.Errorf("%s: %s", "get order by cart token failed", err)
 
 		if err == mgo.ErrNotFound {
-			log.Info("Send Notification")
 			go send(notification)
 		}
 	}
