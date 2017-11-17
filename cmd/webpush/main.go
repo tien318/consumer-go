@@ -77,6 +77,7 @@ func run() {
 	}
 
 	for _, notification := range notifications {
+		log.Info("Check Notification: ", notification.ID)
 		_, err := orderService.GetByCartToken(notification.CartToken)
 
 		if err == mgo.ErrNotFound {
