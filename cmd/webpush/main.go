@@ -82,6 +82,8 @@ func run() {
 
 		if err == mgo.ErrNotFound {
 			go send(notification)
+		} else if err != nil {
+			log.Error(err)
 		}
 	}
 }
