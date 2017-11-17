@@ -45,10 +45,13 @@ func (s *OrderService) CountByProductRefID(shopID int, productRefID int) (int, e
 	return count, err
 }
 
-func (s *OrderService) GetByCartToken(cartToken string) (*consumer.Order, error) {
+func (s *OrderService) GetByCartToken(shopID int64, cartToken string) (*consumer.Order, error) {
 	var order *consumer.Order
 
-	err := s.Collection.Find(bson.M{"cartToken": cartToken}).One(&order)
+	err := s.Collection.Find(bson.M{
+		"shopId":    shopID,
+		"cartToken": cartToken,
+	}).One(&order)
 
 	return order, err
 }
