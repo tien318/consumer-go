@@ -76,15 +76,18 @@ func run() {
 		return
 	}
 
-	log.Info("Count Notification: ", len(notifications))
+	count := 0
 
 	for _, notification := range notifications {
 		_, err := orderService.GetByCartToken(notification.CartToken)
 
 		if err == mgo.ErrNotFound {
+			count++
 			go send(notification)
 		}
 	}
+
+	log.Info("Count Notification: ", count)
 }
 
 func send(noti *consumer.WebNotification) {
