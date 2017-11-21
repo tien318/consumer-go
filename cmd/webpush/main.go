@@ -77,13 +77,12 @@ func run() {
 	}
 
 	for _, notification := range notifications {
-		log.Info("Check Notification: ", notification.ID)
 		_, err := orderService.GetByCartToken(notification.ShopID, notification.CartToken)
 
 		if err == mgo.ErrNotFound {
 			go send(notification)
 		} else if err != nil {
-			log.Error(err)
+			log.Fatal(err)
 		}
 	}
 }
@@ -136,7 +135,8 @@ func updateStatistic(shopID int64, timeType string) {
 	// get statistic by params
 	stat, err := statisticService.Get(shopID, statisticType, shopID, timeType, time)
 	if err != nil && err != mgo.ErrNotFound {
-		log.Fatal(err)
+		log.Error(err)
+		return
 	}
 
 	if err == mgo.ErrNotFound {
@@ -154,7 +154,8 @@ func updateStatistic(shopID int64, timeType string) {
 		err = statisticService.Add(stat)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Error(err)
+			return
 		}
 	}
 
@@ -162,7 +163,8 @@ func updateStatistic(shopID int64, timeType string) {
 	err = statisticService.Increase(stat, "pusher_count", 1)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		return
 	}
 }
 
