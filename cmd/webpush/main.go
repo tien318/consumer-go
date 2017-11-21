@@ -115,8 +115,6 @@ func send(noti *consumer.WebNotification) {
 				url = data["url"].(string)
 			}
 
-			log.Info(title, body, url)
-
 			webpush.SendApns(noti.Subscription, title, body, url)
 		}
 	}
