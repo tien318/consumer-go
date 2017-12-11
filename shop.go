@@ -8,6 +8,24 @@ type Shop struct {
 	Domain       string
 	PublicDomain string
 	APIKey       string
+	Platform     string
+}
+
+// Is shop support abandoned checkout api
+func (s Shop) IsSupportAbandonedCheckout() bool {
+	return s.Platform == "shopify"
+}
+
+// Get cart url
+func (s Shop) GetCartUrl() string {
+	var url = ""
+	switch s.Platform {
+		case "bigcommerce":
+			url = "https://" + s.Domain + "/cart.php"
+		default:
+			url = "http://" + s.Domain + "/cart"
+	}
+	return url
 }
 
 // ShopService lorem

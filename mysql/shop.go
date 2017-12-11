@@ -18,14 +18,14 @@ type ShopService struct {
 func (s *ShopService) GetByID(id int) (*consumer.Shop, error) {
 	shop := &consumer.Shop{}
 
-	stmt, err := s.DB.Prepare("SELECT id, user_id, name, domain, public_domain, api_key FROM shops where id = ?")
+	stmt, err := s.DB.Prepare("SELECT id, user_id, name, domain, public_domain, api_key, platform FROM shops where id = ?")
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 	defer stmt.Close()
 
-	err = stmt.QueryRow(id).Scan(&shop.ID, &shop.UserID, &shop.Name, &shop.Domain, &shop.PublicDomain, &shop.APIKey)
+	err = stmt.QueryRow(id).Scan(&shop.ID, &shop.UserID, &shop.Name, &shop.Domain, &shop.PublicDomain, &shop.APIKey, &shop.Platform)
 
 	if err != nil {
 		log.Println(err)
@@ -41,7 +41,7 @@ func (s *ShopService) GetByIDs(ids []int) ([]*consumer.Shop, error) {
 
 	strIDs := strings.Trim(strings.Join(strings.Split(fmt.Sprint(ids), " "), ","), "[]")
 
-	stmt, err := s.DB.Prepare("SELECT id, user_id, name, domain, public_domain, api_key FROM shops where id IN (" + strIDs + ")")
+	stmt, err := s.DB.Prepare("SELECT id, user_id, name, domain, public_domain, api_key, platform FROM shops where id IN (" + strIDs + ")")
 	if err != nil {
 		log.Println(err)
 		return shops, err
@@ -59,7 +59,7 @@ func (s *ShopService) GetByIDs(ids []int) ([]*consumer.Shop, error) {
 	for rows.Next() {
 		shop := &consumer.Shop{}
 
-		err := rows.Scan(&shop.ID, &shop.UserID, &name, &domain, &publicDomain, &apiKey)
+		err := rows.Scan(&shop.ID, &shop.UserID, &name, &domain, &publicDomain, &apiKey, &shop.Platform)
 		if err != nil {
 			return shops, err
 		}
