@@ -31,5 +31,6 @@
     },
     "storage": {
         "path": "../../storage"
-    }
+    },
+    "url_abandoned_product": "http://localhost:9000/browse_abandoned_products.json"
 }
