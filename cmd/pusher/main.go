@@ -51,6 +51,8 @@ func init() {
 	config.Load()
 }
 
+var urlAbandonedProduct = ""
+
 func main() {
 	fmt.Println("Pusher consumer")
 
@@ -66,6 +68,8 @@ func main() {
 		log.Fatalf("%s: %s", "Failed to connect to mongo", err)
 	}
 	defer session.Close()
+
+	urlAbandonedProduct = viper.GetString("url_abandoned_product")
 
 	appService = &mysql.AppService{DB: db}
 	appShopService = &mysql.AppShopService{DB: db}
@@ -140,10 +144,10 @@ func run() {
 	for _, appShop := range appShops {
 		for _, shop := range shops {
 			if shop.ID == appShop.ShopID {
-				if shop.IsSupportAbandonedCheckout() {
-					getAbandonedCheckouts(shop, appShop, updatedAtMin, updatedAtMax)
-				} else {
+				if !shop.IsSupportAbandonedCheckout() || shop.ID == 9555759 {
 					getAbandonedCarts(shop, updatedAtMin, updatedAtMax)
+				} else {
+					getAbandonedCheckouts(shop, appShop, updatedAtMin, updatedAtMax)
 				}
 			}
 		}
@@ -169,53 +173,16 @@ func getAbandonedCarts(shop *consumer.Shop, updatedAtMin, updatedAtMax string) {
 			continue
 		} else if err != nil {
 			log.Errorf("%s: %s", "Get subscription failed", err)
+			continue
 		}
 
-		type RequestParams struct {
-			ShopId       string   `json:"shopId"`
-			ContactRefId string   `json:"contactRefId"`
-			BlackList    []string `json:"blackList"`
-			Limit        int      `json:"limit"`
-		}
-
-		// TODO: update params later
-		params := RequestParams{
-			ShopId:       fmt.Sprintf("%d", 9619781),
-			ContactRefId: "9619781_1512721109101_7102",
-			BlackList:    []string{},
-			Limit:        10,
-		}
-		jsonValues, _ := json.Marshal(params)
-		req, err := http.NewRequest("POST", "http://localhost:9000/browse_abandoned_products.json", bytes.NewBuffer(jsonValues))
-		req.Header.Add("Content-Type", "application/json")
-		timeout := time.Duration(5 * time.Second)
-		client := &http.Client{
-			Timeout: timeout,
-		}
-		resp, err := client.Do(req)
+		product, err := getAbandonedProduct(shop, sub)
 		if err != nil {
-			log.Errorf("%s: %s", "request error", err)
+			log.Errorf("%s: %s", "get Abandoned Product failed", err)
+			continue
 		}
 
-		body, err := ioutil.ReadAll(resp.Body)
-		var data map[string]interface{}
-		json.Unmarshal(body, &data)
-
-		productIds := data["items"].([]interface{})
-		if len(productIds) == 0 {
-			log.Info("No product found")
-			return
-		}
-
-		//firstProductID := productIds[0]
-		//result, err := strconv.Atoi(firstProductID.(string))
-		//firstProduct := int64(result)
-
-		var icon = ""
-		product, err := productService.GetByID(77)
-		if err == nil {
-			icon = product.ImageSourceURL
-		}
+		var icon = product.ImageSourceURL
 
 		for _, setting := range settings {
 			wn := &consumer.WebNotification{}
@@ -285,21 +252,74 @@ func getAbandonedCarts(shop *consumer.Shop, updatedAtMin, updatedAtMax string) {
 	log.Info("Count Notifications:", countNotification)
 }
 
+func getAbandonedProduct(shop *consumer.Shop, sub *consumer.Subscription) (*consumer.Product, error) {
+	params := struct {
+		ShopID       string   `json:"shopId"`
+		ContactRefID string   `json:"contactRefId"`
+		BlackList    []string `json:"blackList"`
+		Limit        int      `json:"limit"`
+	}{
+		ShopID: fmt.Sprintf("%d", shop.ID),
+		// ShopID: fmt.Sprintf("%d", 9555759),
+		ContactRefID: sub.ContactRefID,
+		// ContactRefID: "9555759_1513137048883_1878",
+		BlackList: []string{},
+		Limit:     10,
+	}
+
+	jsonValues, _ := json.Marshal(params)
+	log.Info("product ids: ", string(jsonValues))
+	req, err := http.NewRequest("POST", urlAbandonedProduct, bytes.NewBuffer(jsonValues))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	client := &http.Client{
+		Timeout: time.Duration(5 * time.Second),
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var data map[string]interface{}
+	json.Unmarshal(body, &data)
+
+	productIds := data["items"].([]interface{})
+	if len(productIds) == 0 {
+		return nil, errors.New("No product found")
+	}
+
+	productIDStr, err := strconv.Atoi(productIds[0].(string))
+	if err != nil {
+		return nil, err
+	}
+
+	product, err := productService.GetByID(int64(productIDStr))
+	// product, err := productService.GetByID(1)
+
+	return product, err
+}
+
 func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updatedAtMin, updatedAtMax string) {
 	log.Info(">> Shop ID: ", shop.ID)
 
 	// setting
-	// log.Info("Get Setting")
 	settings, err := getSettings(shop)
 	if err != nil {
 		log.Errorf("%s: %s", "Get settings failed", err)
 		return
 	}
-	// log.Info("Count enable settings:", len(settings))
 
 	// get checkout
 	checkouts := fetchAbandonedCheckouts(shop, appShop, updatedAtMin, updatedAtMax)
-	// log.Info("Count checkouts:", len(checkouts))
 
 	countNotification := 0
 	for _, checkout := range checkouts {
@@ -325,7 +345,6 @@ func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updat
 			}
 		}
 
-		// webpush.Send(sub.Subscription)
 		for _, setting := range settings {
 			wn := &consumer.WebNotification{}
 
