@@ -287,7 +287,7 @@ func getAbandonedProduct(shop *consumer.Shop, sub *consumer.Subscription) (*cons
 
 	req.Header.Add("Content-Type", "application/json")
 	client := &http.Client{
-		Timeout: time.Duration(5 * time.Second),
+		Timeout: time.Duration(20 * time.Second),
 	}
 
 	resp, err := client.Do(req)
