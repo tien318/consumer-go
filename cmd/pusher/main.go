@@ -168,6 +168,7 @@ func isTestShop(shop *consumer.Shop) bool {
 // Get abandoned carts
 func getAbandonedCarts(shop *consumer.Shop, updatedAtMin, updatedAtMax string) {
 	log.Info(">> Shop domain: ", shop.Domain)
+	log.Infof("Time: %s - %s", updatedAtMin, updatedAtMax)
 
 	settings, err := getSettings(shop)
 	if err != nil {
@@ -177,6 +178,7 @@ func getAbandonedCarts(shop *consumer.Shop, updatedAtMin, updatedAtMax string) {
 
 	countNotification := 0
 	carts, _ := cartService.GetAbandonedCarts(shop.ID, updatedAtMin, updatedAtMax)
+	log.Info("Count abandoned carts:", len(carts))
 	for _, cart := range carts {
 		sub, err := subscriptionService.GetByCartToken(cart.CartToken)
 		if err == sql.ErrNoRows {
@@ -421,7 +423,9 @@ func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updat
 		}
 	}
 
-	log.Info("Shop ", shop.ID, " : ", countNotification)
+	if countNotification > 0 {
+		log.Info("Shop ", shop.ID, " : ", countNotification)
+	}
 }
 
 func getSettings(shop *consumer.Shop) ([]pusher.ReminderSetting, error) {
