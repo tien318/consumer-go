@@ -144,7 +144,7 @@ func run() {
 	for _, appShop := range appShops {
 		for _, shop := range shops {
 			if shop.ID == appShop.ShopID {
-				if !shop.IsSupportAbandonedCheckout() || shop.ID == 9555759 {
+				if !shop.IsSupportAbandonedCheckout() || isTestShop(shop) {
 					getAbandonedCarts(shop, updatedAtMin, updatedAtMax)
 				} else {
 					getAbandonedCheckouts(shop, appShop, updatedAtMin, updatedAtMax)
@@ -152,6 +152,17 @@ func run() {
 			}
 		}
 	}
+}
+
+func isTestShop(shop *consumer.Shop) bool {
+	testShopIds := []int{9555759, 9464465, 9565706, 9565217, 9569191}
+	for _, id := range testShopIds {
+		if shop.ID == id {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Get abandoned carts
