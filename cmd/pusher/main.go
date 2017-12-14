@@ -309,7 +309,7 @@ func getAbandonedProduct(shop *consumer.Shop, sub *consumer.Subscription) (*cons
 }
 
 func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updatedAtMin, updatedAtMax string) {
-	log.Info(">> Shop ID: ", shop.ID)
+	// log.Info(">> Shop ID: ", shop.ID)
 
 	// setting
 	settings, err := getSettings(shop)
@@ -410,7 +410,7 @@ func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updat
 		}
 	}
 
-	log.Info("Count Notifications:", countNotification)
+	log.Info("Shop ", shop.ID, " : ", countNotification)
 }
 
 func getSettings(shop *consumer.Shop) ([]pusher.ReminderSetting, error) {
@@ -452,7 +452,7 @@ func fetchAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, upd
 	for page := 1; ; page++ {
 		// call api
 		url := "https://" + shop.Domain + "/admin/checkouts.json?access_token=" + appShop.TokenKey + "&updated_at_min=" + updatedAtMin + "&updated_at_max=" + updatedAtMax + "&limit=250&page=" + strconv.Itoa(page)
-		log.Info(url)
+		// log.Info(url)
 		resp, err := http.Get(url)
 		if err != nil {
 			log.Errorf("%s: %s", url, err)
