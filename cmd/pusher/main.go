@@ -246,9 +246,9 @@ func getAbandonedCarts(shop *consumer.Shop, updatedAtMin, updatedAtMax string) {
 			wn.Data = string(data)
 
 			if setting.KeyString == "pusher_cart_reminder_15_mins" {
-				wn.SendAt = time.Now().Add(time.Minute * 15)
+				wn.SendAt = time.Now()
 			} else if setting.KeyString == "pusher_cart_reminder_1_hour" {
-				wn.SendAt = time.Now().Add(time.Hour * 1)
+				wn.SendAt = time.Now().Add(time.Minute * 45)
 			} else if setting.KeyString == "pusher_cart_reminder_24_hours" {
 				wn.SendAt = time.Now().Add(time.Hour * 24)
 			}
@@ -407,9 +407,9 @@ func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updat
 			wn.Data = string(data)
 
 			if setting.KeyString == "pusher_cart_reminder_15_mins" {
-				wn.SendAt = time.Now().Add(time.Minute * 15)
+				wn.SendAt = time.Now()
 			} else if setting.KeyString == "pusher_cart_reminder_1_hour" {
-				wn.SendAt = time.Now().Add(time.Hour * 1)
+				wn.SendAt = time.Now().Add(time.Minute * 45)
 			} else if setting.KeyString == "pusher_cart_reminder_24_hours" {
 				wn.SendAt = time.Now().Add(time.Hour * 24)
 			}
