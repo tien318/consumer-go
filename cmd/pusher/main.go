@@ -155,7 +155,7 @@ func run() {
 }
 
 func isTestShop(shop *consumer.Shop) bool {
-	testShopIds := []int{9555759, 9464465, 9565706, 9565217, 9569191}
+	testShopIds := []int{9555759, 9464465, 9565706, 9565217, 9569191, 9688252}
 	for _, id := range testShopIds {
 		if shop.ID == id {
 			return true
