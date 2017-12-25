@@ -177,7 +177,11 @@ func getAbandonedCarts(shop *consumer.Shop, updatedAtMin, updatedAtMax string) {
 	}
 
 	countNotification := 0
-	carts, _ := cartService.GetAbandonedCarts(shop.ID, updatedAtMin, updatedAtMax)
+	carts, err := cartService.GetAbandonedCarts(shop.ID, updatedAtMin, updatedAtMax)
+	if err != nil {
+		log.Errorf("%s: %s", "Get abandoned carts failed", err)
+		return
+	}
 	log.Info("Count abandoned carts:", len(carts))
 	for _, cart := range carts {
 		sub, err := subscriptionService.GetByCartToken(cart.CartToken)
