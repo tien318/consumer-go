@@ -13,7 +13,8 @@
         "db": 0
     },
     "mongodb": {
-        "url": "localhost:27017/beeketing-platform"
+        "url": "localhost:27017/beeketing-platform",
+        "db": "beeketing"
     },
     "rabbitmq": {
         "url": "amqp://guest:guest@localhost:5672/",

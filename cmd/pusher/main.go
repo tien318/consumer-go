@@ -63,7 +63,15 @@ func main() {
 		panic(err)
 	}
 
-	session, err := mgo.Dial(viper.GetString("mongodb.url"))
+	// session, err := mgo.Dial(viper.GetString("mongodb.url"))
+	session, err := mgo.DialWithInfo(&mgo.DialInfo{
+		Addrs:    []string{viper.GetString("mongodb.url")},
+		Direct:   false,
+		Timeout:  time.Second * 2,
+		FailFast: true,
+		Database: viper.GetString("mongodb.db"),
+	})
+
 	if err != nil {
 		log.Fatalf("%s: %s", "Failed to connect to mongo", err)
 	}
