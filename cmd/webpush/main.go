@@ -15,6 +15,7 @@ import (
 	"github.com/robfig/cron"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"github.com/streadway/amqp"
 	mgo "gopkg.in/mgo.v2"
 )
 
@@ -27,6 +28,9 @@ var (
 	notificationService consumer.WebNotificationService
 	statisticService    consumer.StatisticService
 	orderService        consumer.OrderService
+	rabbitConn          *amqp.Connection
+	rabbitChannel       *amqp.Channel
+	rabbitQueue         amqp.Queue
 )
 
 func init() {
@@ -53,6 +57,24 @@ func main() {
 	notificationService = &mysql.WebNotificationService{DB: db}
 	statisticService = mongo.NewStatisticService(session)
 	orderService = mongo.NewOrderService(session)
+
+	rabbitConn, err = amqp.Dial(viper.GetString("rabbitmq.url"))
+	failOnError(err, "Failed to connect to RabbitMQ")
+	defer rabbitConn.Close()
+
+	rabbitChannel, err = rabbitConn.Channel()
+	failOnError(err, "Failed to open a channel")
+	defer rabbitChannel.Close()
+
+	rabbitQueue, err = rabbitChannel.QueueDeclare(
+		"tracker_hub", // name
+		true,          // durable
+		false,         // delete when unused
+		false,         // exclusive
+		false,         // no-wait
+		nil,           // arguments
+	)
+	failOnError(err, "Failed to declare a queue")
 
 	c := cron.New()
 
@@ -121,6 +143,13 @@ func send(noti *consumer.WebNotification) {
 
 	updateStatistic(noti.ShopID, "day")
 	updateStatistic(noti.ShopID, "total")
+
+	params := make(map[string]interface{})
+	params["shop_id"] = noti.ShopID
+	err = track("pusher_push", params)
+	if err != nil {
+		log.Errorf("%s: %s", "Track failed", err)
+	}
 }
 
 func updateStatistic(shopID int64, timeType string) {
@@ -184,4 +213,29 @@ func getNewStatisticID() int64 {
 	}
 
 	return id
+}
+
+func track(event string, params map[string]interface{}) error {
+	body, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+
+	err = rabbitChannel.Publish(
+		"",               // exchange
+		rabbitQueue.Name, // routing key
+		false,            // mandatory
+		false,            // immediate
+		amqp.Publishing{
+			ContentType: "text/plain",
+			Body:        body,
+		})
+
+	return err
+}
+
+func failOnError(err error, msg string) {
+	if err != nil {
+		log.Fatalf("%s: %s", msg, err)
+	}
 }
