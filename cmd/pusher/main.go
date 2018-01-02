@@ -112,7 +112,6 @@ func run() {
 	// init time
 	updatedAtMin := time.Now().Add(-time.Minute * 20).Format(time.RFC3339)
 	updatedAtMax := time.Now().Add(-time.Minute * 15).Format(time.RFC3339)
-	// log.Infof("Time: %s - %s", updatedAtMin, updatedAtMax)
 
 	// get appshops
 	appShops, err := appShopService.GetByAppID(app.ID)
@@ -121,7 +120,6 @@ func run() {
 		return
 	}
 
-	// log.Info("Total AppShops: ", len(appShops))
 	if len(appShops) == 0 {
 		return
 	}
@@ -135,6 +133,7 @@ func run() {
 	shops, err := shopService.GetByIDs(shopIds)
 	if err != nil {
 		log.Errorf("%s: %s", "Get Shops failed", err)
+		return
 	}
 
 	log.Info("Total Shops: ", len(shops))
@@ -145,11 +144,12 @@ func run() {
 	for _, appShop := range appShops {
 		for _, shop := range shops {
 			if shop.ID == appShop.ShopID {
-				if !shop.IsSupportAbandonedCheckout() || isTestShop(shop) {
-					getAbandonedCarts(shop, updatedAtMin, updatedAtMax)
-				} else {
-					getAbandonedCheckouts(shop, appShop, updatedAtMin, updatedAtMax)
-				}
+				go getAbandonedCarts(shop, updatedAtMin, updatedAtMax)
+				// if !shop.IsSupportAbandonedCheckout() || isTestShop(shop) {
+				// 	go getAbandonedCarts(shop, updatedAtMin, updatedAtMax)
+				// } else {
+				// 	go getAbandonedCheckouts(shop, appShop, updatedAtMin, updatedAtMax)
+				// }
 			}
 		}
 	}
@@ -177,6 +177,10 @@ func getAbandonedCarts(shop *consumer.Shop, updatedAtMin, updatedAtMax string) {
 		return
 	}
 
+	if len(settings) == 0 {
+		return
+	}
+
 	countNotification := 0
 	carts, err := cartService.GetAbandonedCarts(shop.ID, updatedAtMin, updatedAtMax)
 	if err != nil {
@@ -187,7 +191,6 @@ func getAbandonedCarts(shop *consumer.Shop, updatedAtMin, updatedAtMax string) {
 	for _, cart := range carts {
 		sub, err := subscriptionService.GetByCartToken(cart.CartToken)
 		if err == sql.ErrNoRows {
-			log.Info("No subscription found with cart token: ", cart.CartToken)
 			continue
 		} else if err != nil {
 			log.Errorf("%s: %s", "Get subscription failed", err)
@@ -239,12 +242,16 @@ func getAbandonedCarts(shop *consumer.Shop, updatedAtMin, updatedAtMax string) {
 				URL     string              `json:"url"`
 				Icon    string              `json:"icon"`
 				Actions []map[string]string `json:"actions"`
+				ShopID  int                 `json:"shop_id"`
+				APIKey  string              `json:"api_key"`
 			}{
 				Title:   title,
 				Body:    body,
 				URL:     url,
 				Icon:    icon,
 				Actions: actions,
+				ShopID:  shop.ID,
+				APIKey:  shop.APIKey,
 			}
 
 			data, _ := json.Marshal(dataObj)
@@ -327,12 +334,14 @@ func getAbandonedProduct(shop *consumer.Shop, sub *consumer.Subscription) (*cons
 }
 
 func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updatedAtMin, updatedAtMax string) {
-	// log.Info(">> Shop ID: ", shop.ID)
-
 	// setting
 	settings, err := getSettings(shop)
 	if err != nil {
 		log.Errorf("%s: %s", "Get settings failed", err)
+		return
+	}
+
+	if len(settings) == 0 {
 		return
 	}
 
@@ -348,7 +357,6 @@ func getAbandonedCheckouts(shop *consumer.Shop, appShop *consumer.AppShop, updat
 		}
 
 		if err == sql.ErrNoRows {
-			log.Info("No subscription found with cart token: ", checkout.CartToken)
 			continue
 		}
 
@@ -442,10 +450,9 @@ func getSettings(shop *consumer.Shop) ([]pusher.ReminderSetting, error) {
 	}
 
 	if len(settings) == 0 {
-		return reminderSettings, errors.New("No settings")
+		return reminderSettings, nil
 	}
 
-	countEnable := 0
 	for _, setting := range settings {
 		r, err := pusher.UnmarshalReminderSetting([]byte(setting.Value))
 		if err != nil {
@@ -455,12 +462,7 @@ func getSettings(shop *consumer.Shop) ([]pusher.ReminderSetting, error) {
 		if r.Enable {
 			r.KeyString = setting.KeyString
 			reminderSettings = append(reminderSettings, r)
-			countEnable++
 		}
-	}
-
-	if countEnable == 0 {
-		return reminderSettings, errors.New("No enabled setting")
 	}
 
 	return reminderSettings, nil
