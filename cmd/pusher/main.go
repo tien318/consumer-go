@@ -168,9 +168,6 @@ func isTestShop(shop *consumer.Shop) bool {
 
 // Get abandoned carts
 func getAbandonedCarts(shop *consumer.Shop, updatedAtMin, updatedAtMax string) {
-	log.Info(">> Shop domain: ", shop.Domain)
-	log.Infof("Time: %s - %s", updatedAtMin, updatedAtMax)
-
 	settings, err := getSettings(shop)
 	if err != nil {
 		log.Errorf("%s: %s", "Get settings failed", err)
@@ -187,7 +184,7 @@ func getAbandonedCarts(shop *consumer.Shop, updatedAtMin, updatedAtMax string) {
 		log.Errorf("%s: %s", "Get abandoned carts failed", err)
 		return
 	}
-	log.Info("Count abandoned carts:", len(carts))
+
 	for _, cart := range carts {
 		sub, err := subscriptionService.GetByCartToken(cart.CartToken)
 		if err == sql.ErrNoRows {
@@ -274,7 +271,12 @@ func getAbandonedCarts(shop *consumer.Shop, updatedAtMin, updatedAtMax string) {
 		}
 	}
 
-	log.Info("Count Notifications:", countNotification)
+	if len(carts) > 0 || countNotification > 0 {
+		log.Info("Shop: ", shop.Domain)
+		log.Infof("Time: %s - %s", updatedAtMin, updatedAtMax)
+		log.Info("Count abandoned carts: ", len(carts))
+		log.Info("Count Notifications: ", countNotification)
+	}
 }
 
 func getAbandonedProduct(shop *consumer.Shop, sub *consumer.Subscription) (*consumer.Product, error) {
