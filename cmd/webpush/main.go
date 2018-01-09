@@ -21,7 +21,7 @@ import (
 
 const (
 	cacheKey         = "pusher_statistic_cache_key"
-	startStatisticID = 3000000000
+	startStatisticID = 4000000000
 )
 
 var (
