@@ -47,16 +47,7 @@ func main() {
 		panic(err)
 	}
 
-	// mongodb
-	session, err := mgo.Dial(viper.GetString("mongodb.url"))
-	if err != nil {
-		log.Fatalf("%s: %s", "Failed to connect to mongo", err)
-	}
-	defer session.Close()
-
 	notificationService = &mysql.WebNotificationService{DB: db}
-	statisticService = mongo.NewStatisticService(session)
-	orderService = mongo.NewOrderService(session)
 
 	rabbitConn, err = amqp.Dial(viper.GetString("rabbitmq.url"))
 	failOnError(err, "Failed to connect to RabbitMQ")
@@ -92,6 +83,15 @@ func main() {
 }
 
 func run() {
+	// mongodb
+	session, err := mgo.Dial(viper.GetString("mongodb.url"))
+	if err != nil {
+		log.Fatalf("%s: %s", "Failed to connect to mongo", err)
+	}
+
+	statisticService = mongo.NewStatisticService(session)
+	orderService = mongo.NewOrderService(session)
+
 	notifications, err := notificationService.GetNotificationToSend()
 	if err != nil {
 		log.Errorf("%s: %s", "Get notification failed", err)

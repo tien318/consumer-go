@@ -63,13 +63,6 @@ func main() {
 		panic(err)
 	}
 
-	session, err := mgo.Dial(viper.GetString("mongodb.url"))
-
-	if err != nil {
-		log.Fatalf("%s: %s", "Failed to connect to mongo", err)
-	}
-	defer session.Close()
-
 	urlAbandonedProduct = viper.GetString("url_abandoned_product")
 
 	appService = &mysql.AppService{DB: db}
@@ -78,8 +71,6 @@ func main() {
 	subscriptionService = &mysql.SubscriptionService{DB: db}
 	settingService = &mysql.SettingService{DB: db}
 	webNotificationService = &mysql.WebNotificationService{DB: db}
-	productService = mongo.NewProductService(session, nil)
-	cartService = mongo.NewCartService(session)
 
 	app, err = appService.GetByAppCode(appCode)
 	if err != nil && err != sql.ErrNoRows {
@@ -108,6 +99,15 @@ func main() {
 
 func run() {
 	log.Info("Start Fetch Abandoned Checkout from Shopify")
+
+	session, err := mgo.Dial(viper.GetString("mongodb.url"))
+
+	if err != nil {
+		log.Fatalf("%s: %s", "Failed to connect to mongo", err)
+	}
+
+	productService = mongo.NewProductService(session, nil)
+	cartService = mongo.NewCartService(session)
 
 	// init time
 	updatedAtMin := time.Now().Add(-time.Minute * 20).Format(time.RFC3339)
@@ -264,7 +264,7 @@ func getAbandonedCarts(shop *consumer.Shop, updatedAtMin, updatedAtMax string) {
 
 			_, err := webNotificationService.Add(wn)
 			if err != nil {
-				log.Errorf("%s: %s", "Error add web notification", err)
+				log.Errorf("%s: %s", "Add web notification failed", err)
 			} else {
 				countNotification++
 			}
