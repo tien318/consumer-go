@@ -99,10 +99,12 @@ func run() {
 	}
 
 	for _, notification := range notifications {
+		// get order by cartToken (mongo)
 		_, err := orderService.GetByCartToken(notification.ShopID, notification.CartToken)
-
+		// if no order in mongo -> send
 		if err == mgo.ErrNotFound {
 			go send(notification)
+			// if there is an order -> cart has been checkout -> not send
 		} else if err != nil {
 			log.Fatal(err)
 		}
@@ -112,14 +114,17 @@ func run() {
 func send(noti *consumer.WebNotification) {
 	log.Info("Send Notification: ", noti.ID)
 
+	// update to web_notification set send = 1
 	notificationService.UpdateSent(noti)
 
 	var sub map[string]interface{}
 	err := json.Unmarshal([]byte(noti.Subscription), &sub)
 
 	if err == nil {
+		// send to chrome/firefox
 		webpush.Send(noti.Subscription, noti.Data)
 	} else {
+		// send to safari
 		var data map[string]interface{}
 		err = json.Unmarshal([]byte(noti.Data), &data)
 		if err == nil {
@@ -186,6 +191,7 @@ func updateStatistic(shopID int64, timeType string) {
 		}
 	}
 
+	// if stat found, increase
 	// increase value
 	err = statisticService.Increase(stat, "pusher_count", 1)
 

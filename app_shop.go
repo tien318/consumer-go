@@ -12,4 +12,5 @@ type AppShop struct {
 type AppShopService interface {
 	GetByID(id int) (*AppShop, error)
 	GetByAppID(appID int) ([]*AppShop, error)
+	GetByShopIDAndAppID(shopID, appID int) (*AppShop, error)
 }

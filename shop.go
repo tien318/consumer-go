@@ -20,10 +20,10 @@ func (s Shop) IsSupportAbandonedCheckout() bool {
 func (s Shop) GetCartUrl() string {
 	var url = ""
 	switch s.Platform {
-		case "bigcommerce":
-			url = "https://" + s.Domain + "/cart.php"
-		default:
-			url = "http://" + s.Domain + "/cart"
+	case "bigcommerce":
+		url = "https://" + s.Domain + "/cart.php"
+	default:
+		url = "http://" + s.Domain + "/cart"
 	}
 	return url
 }
