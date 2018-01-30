@@ -77,3 +77,28 @@ func (s *AppShopService) GetByAppID(appID int) ([]*consumer.AppShop, error) {
 
 	return ass, nil
 }
+
+// GetByShopIDAndAppID --
+func (s *AppShopService) GetByShopIDAndAppID(shopID, appID int) (*consumer.AppShop, error) {
+	appShop := &consumer.AppShop{}
+
+	stmt, err := s.DB.Prepare("select id, app_id, shop_id, token_key from apps_shops where shop_id = ? and app_id = ?")
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	var tokenKey []byte
+
+	err = stmt.QueryRow(shopID, appID).Scan(&appShop.ID, &appShop.AppID, &appShop.ShopID, &tokenKey)
+
+	appShop.TokenKey = string(tokenKey)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return appShop, nil
+}
