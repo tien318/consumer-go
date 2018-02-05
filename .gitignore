@@ -20,6 +20,7 @@ cmd/web/web
 cmd/logger/logger
 cmd/webpush/webpush
 cmd/pusher/pusher
+cmd/pusher/pushertoredis
 
 # config file
 config/config.json
