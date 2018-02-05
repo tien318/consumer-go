@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// WebNotification --
 type WebNotification struct {
 	ID           int64
 	ShopID       int64
@@ -18,8 +19,10 @@ type WebNotification struct {
 	UpdatedAt    time.Time
 }
 
+// WebNotificationService --
 type WebNotificationService interface {
 	Add(wn *WebNotification) (int64, error)
 	GetNotificationToSend() ([]*WebNotification, error)
 	UpdateSent(wn *WebNotification) error
+	GetByShopIDAndCartToken(shopID int, cartToken string) ([]*WebNotification, error)
 }

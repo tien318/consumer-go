@@ -103,43 +103,8 @@ func main() {
 func run() {
 	log.Info("Start Fetch Abandoned Checkout from Shopify")
 
-	result, err := redis.Client.HGetAll("pusher").Result()
-	if err != nil {
-		log.Errorf("Fail to get cart token to redis")
-		return
-	}
-
-	if len(result) == 0 {
-		return
-	}
-
-	// get shops
-	shopIDs := make([]int, 0)
-	cartTokens := make([]string, 0)
-
-	for key, value := range result {
-		// fields[0]: shopID
-		// fields[1]: cartToken
-		fields := strings.Split(key, ":")
-
-		if len(fields) != 2 {
-			log.Errorf("%s: %s | %s", "Invalid hash field", key, err)
-			return
-		}
-
-		shopID, _ := strconv.Atoi(fields[0])
-		shopIDs = append(shopIDs, shopID)
-		cartTokens = append(cartTokens, value)
-	}
-
-	// Delete hash
-	_, err = redis.Client.Del("pusher").Result()
-	if err != nil {
-		log.Errorf("Delete Cart token in redis failed, details: %v", err)
-		return
-	}
-
 	session, err := mgo.Dial(viper.GetString("mongodb.url"))
+
 	if err != nil {
 		log.Fatalf("%s: %s", "Failed to connect to mongo", err)
 	}
@@ -147,181 +112,50 @@ func run() {
 	productService = mongo.NewProductService(session, nil)
 	cartService = mongo.NewCartService(session)
 
-	shops, err := shopService.GetByIDs(shopIDs)
+	// init time
+	updatedAtMin := time.Now().Add(-time.Minute * 20).Format(time.RFC3339)
+	updatedAtMax := time.Now().Add(-time.Minute * 15).Format(time.RFC3339)
+
+	// get appshops
+	appShops, err := appShopService.GetByAppID(app.ID)
+	if err != nil {
+		log.Errorf("%s: %s", "Get App Shops failed", err)
+		return
+	}
+
+	if len(appShops) == 0 {
+		return
+	}
+
+	// get shops
+	shopIds := make([]int, 0)
+	for _, appShop := range appShops {
+		shopIds = append(shopIds, appShop.ShopID)
+	}
+
+	shops, err := shopService.GetByIDs(shopIds)
 	if err != nil {
 		log.Errorf("%s: %s", "Get Shops failed", err)
 		return
 	}
 
-	countNotification := 0
-	carts, err := cartService.GetAbandonedCartsByCartTokens(cartTokens)
-	if err != nil {
-		log.Errorf("%s: %s", "Get abandoned carts failed", err)
+	log.Info("Total Shops: ", len(shops))
+	if len(shops) == 0 {
 		return
 	}
 
-	// get * from web_push_subscriptions by cart_token
-	for _, cart := range carts {
+	for _, appShop := range appShops {
 		for _, shop := range shops {
-			if cart.ShopID == shop.ID {
-				sub, err := subscriptionService.GetByCartToken(cart.CartToken)
-				if err == sql.ErrNoRows {
-					continue
-				} else if err != nil {
-					log.Errorf("%s: %s", "Get subscription failed", err)
-					continue
-				}
-
-				settings, err := getSettings(shop)
-				if err != nil {
-					log.Errorf("%s: %s", "Get settings failed", err)
-					return
-				}
-
-				if len(settings) == 0 {
-					return
-				}
-
-				// get abandoned product from http://localhost:9000/browse_abandoned_products.json
-				product, err := getAbandonedProduct(shop, sub)
-				if err != nil {
-					log.Errorf("%s: %s", "get Abandoned Product failed", err)
-					continue
-				}
-
-				var icon = product.ImageSourceURL
-
-				for _, setting := range settings {
-					wn := &consumer.WebNotification{}
-
-					wn.ShopID = int64(shop.ID)
-					wn.CartToken = cart.CartToken
-					wn.Subscription = sub.Subscription
-					wn.ContactRefID = sub.ContactRefID
-					wn.Send = 0
-					wn.Campaign = "pusher_abandoned_checkout"
-
-					title := strings.Replace(setting.Subject, "{store_name}", shop.Name, -1)
-					body := strings.Replace(setting.Message, "{store_name}", shop.Name, -1)
-
-					if product != nil {
-						title = strings.Replace(title, "{item_name}", product.Title, -1)
-						title = strings.Replace(title, "{price}", strconv.FormatFloat(product.MinPrice, 'f', 2, 32), -1)
-						body = strings.Replace(body, "{item_name}", product.Title, -1)
-						body = strings.Replace(body, "{price}", strconv.FormatFloat(product.MinPrice, 'f', 2, 32), -1)
-					}
-
-					url := shop.GetCartUrl()
-
-					actions := make([]map[string]string, 0)
-					for _, button := range setting.Buttons {
-						action := make(map[string]string)
-						action["title"] = button.Text
-						action["action"] = button.Url
-
-						actions = append(actions, action)
-					}
-
-					dataObj := struct {
-						Title   string              `json:"title"`
-						Body    string              `json:"body"`
-						URL     string              `json:"url"`
-						Icon    string              `json:"icon"`
-						Actions []map[string]string `json:"actions"`
-						ShopID  int                 `json:"shop_id"`
-						APIKey  string              `json:"api_key"`
-					}{
-						Title:   title,
-						Body:    body,
-						URL:     url,
-						Icon:    icon,
-						Actions: actions,
-						ShopID:  shop.ID,
-						APIKey:  shop.APIKey,
-					}
-
-					data, _ := json.Marshal(dataObj)
-					wn.Data = string(data)
-
-					if setting.KeyString == "pusher_cart_reminder_15_mins" {
-						wn.SendAt = time.Now()
-					} else if setting.KeyString == "pusher_cart_reminder_1_hour" {
-						wn.SendAt = time.Now().Add(time.Minute * 45)
-					} else if setting.KeyString == "pusher_cart_reminder_24_hours" {
-						wn.SendAt = time.Now().Add(time.Hour * 24)
-					}
-
-					_, err := webNotificationService.Add(wn)
-					if err != nil {
-						log.Errorf("%s: %s", "Add web notification failed", err)
-					} else {
-						countNotification++
-					}
-				}
-				if len(carts) > 0 || countNotification > 0 {
-					log.Info("Shop: ", shop.Domain)
-					log.Info("Count abandoned carts: ", len(carts))
-					log.Info("Count Notifications: ", countNotification)
-				}
+			if shop.ID == appShop.ShopID {
+				go getAbandonedCarts(shop, updatedAtMin, updatedAtMax)
+				// if !shop.IsSupportAbandonedCheckout() || isTestShop(shop) {
+				// 	go getAbandonedCarts(shop, updatedAtMin, updatedAtMax)
+				// } else {
+				// 	go getAbandonedCheckouts(shop, appShop, updatedAtMin, updatedAtMax)
+				// }
 			}
 		}
 	}
-
-	// log.Info("Start Fetch Abandoned Checkout from Shopify")
-
-	// session, err := mgo.Dial(viper.GetString("mongodb.url"))
-
-	// if err != nil {
-	// 	log.Fatalf("%s: %s", "Failed to connect to mongo", err)
-	// }
-
-	// productService = mongo.NewProductService(session, nil)
-	// cartService = mongo.NewCartService(session)
-
-	// // init time
-	// updatedAtMin := time.Now().Add(-time.Minute * 20).Format(time.RFC3339)
-	// updatedAtMax := time.Now().Add(-time.Minute * 15).Format(time.RFC3339)
-
-	// // get appshops
-	// appShops, err := appShopService.GetByAppID(app.ID)
-	// if err != nil {
-	// 	log.Errorf("%s: %s", "Get App Shops failed", err)
-	// 	return
-	// }
-
-	// if len(appShops) == 0 {
-	// 	return
-	// }
-
-	// // get shops
-	// shopIds := make([]int, 0)
-	// for _, appShop := range appShops {
-	// 	shopIds = append(shopIds, appShop.ShopID)
-	// }
-
-	// shops, err := shopService.GetByIDs(shopIds)
-	// if err != nil {
-	// 	log.Errorf("%s: %s", "Get Shops failed", err)
-	// 	return
-	// }
-
-	// log.Info("Total Shops: ", len(shops))
-	// if len(shops) == 0 {
-	// 	return
-	// }
-
-	// for _, appShop := range appShops {
-	// 	for _, shop := range shops {
-	// 		if shop.ID == appShop.ShopID {
-	// 			go getAbandonedCarts(shop, updatedAtMin, updatedAtMax)
-	// 			// if !shop.IsSupportAbandonedCheckout() || isTestShop(shop) {
-	// 			// 	go getAbandonedCarts(shop, updatedAtMin, updatedAtMax)
-	// 			// } else {
-	// 			// 	go getAbandonedCheckouts(shop, appShop, updatedAtMin, updatedAtMax)
-	// 			// }
-	// 		}
-	// 	}
-	// }
 }
 
 func isTestShop(shop *consumer.Shop) bool {
@@ -335,122 +169,142 @@ func isTestShop(shop *consumer.Shop) bool {
 	return false
 }
 
-// // Get abandoned carts
-// func getAbandonedCarts(shop *consumer.Shop, updatedAtMin, updatedAtMax string) {
-// 	// get setting by shop
-// 	settings, err := getSettings(shop)
-// 	if err != nil {
-// 		log.Errorf("%s: %s", "Get settings failed", err)
-// 		return
-// 	}
+// Get abandoned carts
+func getAbandonedCarts(shop *consumer.Shop, updatedAtMin, updatedAtMax string) {
+	// get setting by shop
+	settings, err := getSettings(shop)
+	if err != nil {
+		log.Errorf("%s: %s", "Get settings failed", err)
+		return
+	}
 
-// 	if len(settings) == 0 {
-// 		return
-// 	}
+	if len(settings) == 0 {
+		return
+	}
 
-// 	countNotification := 0
-// 	// get abandoned cart from mongo by shopID, success = false
-// 	carts, err := cartService.GetAbandonedCarts(shop.ID, updatedAtMin, updatedAtMax)
-// 	if err != nil {
-// 		log.Errorf("%s: %s", "Get abandoned carts failed", err)
-// 		return
-// 	}
+	countNotification := 0
+	// get abandoned cart from mongo by shopID, success = false
+	carts, err := cartService.GetAbandonedCarts(shop.ID, updatedAtMin, updatedAtMax)
+	if err != nil {
+		log.Errorf("%s: %s", "Get abandoned carts failed", err)
+		return
+	}
 
-// 	// get * from web_push_subscriptions by cart_token
-// 	for _, cart := range carts {
-// 		sub, err := subscriptionService.GetByCartToken(cart.CartToken)
-// 		if err == sql.ErrNoRows {
-// 			continue
-// 		} else if err != nil {
-// 			log.Errorf("%s: %s", "Get subscription failed", err)
-// 			continue
-// 		}
+	// get * from web_push_subscriptions by cart_token
+	for _, cart := range carts {
+		isCreated := false
+		// check if shop has create noti with this cart token yet
+		cs, err := webNotificationService.GetByShopIDAndCartToken(shop.ID, cart.CartToken)
+		if err == sql.ErrNoRows {
+			log.Infof("There is no noti with this cart token, %v", cart.CartToken)
+			isCreated = false
+		} else if err != nil {
+			log.Errorf("%s: %s", "Get subscription failed", err)
+			continue
+		}
 
-// 		// get abandoned product from http://localhost:9000/browse_abandoned_products.json
-// 		product, err := getAbandonedProduct(shop, sub)
-// 		if err != nil {
-// 			log.Errorf("%s: %s", "get Abandoned Product failed", err)
-// 			continue
-// 		}
+		if len(cs) > 0 {
+			isCreated = true
+		}
 
-// 		var icon = product.ImageSourceURL
+		if isCreated == false {
+			sub, err := subscriptionService.GetByCartToken(cart.CartToken)
+			if err == sql.ErrNoRows {
+				log.Infof("There is no subscrption with this cart token, %v", cart.CartToken)
+				continue
+			} else if err != nil {
+				log.Errorf("%s: %s", "Get subscription failed", err)
+				continue
+			}
 
-// 		for _, setting := range settings {
-// 			wn := &consumer.WebNotification{}
+			// get abandoned product from http://localhost:9000/browse_abandoned_products.json
+			product, err := getAbandonedProduct(shop, sub)
+			if err != nil {
+				log.Errorf("%s: %s", "get Abandoned Product failed", err)
+				continue
+			}
 
-// 			wn.ShopID = int64(shop.ID)
-// 			wn.CartToken = cart.CartToken
-// 			wn.Subscription = sub.Subscription
-// 			wn.ContactRefID = sub.ContactRefID
-// 			wn.Send = 0
-// 			wn.Campaign = "pusher_abandoned_checkout"
+			var icon = product.ImageSourceURL
 
-// 			title := strings.Replace(setting.Subject, "{store_name}", shop.Name, -1)
-// 			body := strings.Replace(setting.Message, "{store_name}", shop.Name, -1)
+			for _, setting := range settings {
+				wn := &consumer.WebNotification{}
 
-// 			if product != nil {
-// 				title = strings.Replace(title, "{item_name}", product.Title, -1)
-// 				title = strings.Replace(title, "{price}", strconv.FormatFloat(product.MinPrice, 'f', 2, 32), -1)
-// 				body = strings.Replace(body, "{item_name}", product.Title, -1)
-// 				body = strings.Replace(body, "{price}", strconv.FormatFloat(product.MinPrice, 'f', 2, 32), -1)
-// 			}
+				wn.ShopID = int64(shop.ID)
+				wn.CartToken = cart.CartToken
+				wn.Subscription = sub.Subscription
+				wn.ContactRefID = sub.ContactRefID
+				wn.Send = 0
+				wn.Campaign = "pusher_abandoned_checkout"
 
-// 			url := shop.GetCartUrl()
+				title := strings.Replace(setting.Subject, "{store_name}", shop.Name, -1)
+				body := strings.Replace(setting.Message, "{store_name}", shop.Name, -1)
 
-// 			actions := make([]map[string]string, 0)
-// 			for _, button := range setting.Buttons {
-// 				action := make(map[string]string)
-// 				action["title"] = button.Text
-// 				action["action"] = button.Url
+				if product != nil {
+					title = strings.Replace(title, "{item_name}", product.Title, -1)
+					title = strings.Replace(title, "{price}", strconv.FormatFloat(product.MinPrice, 'f', 2, 32), -1)
+					body = strings.Replace(body, "{item_name}", product.Title, -1)
+					body = strings.Replace(body, "{price}", strconv.FormatFloat(product.MinPrice, 'f', 2, 32), -1)
+				}
 
-// 				actions = append(actions, action)
-// 			}
+				url := shop.GetCartUrl()
 
-// 			dataObj := struct {
-// 				Title   string              `json:"title"`
-// 				Body    string              `json:"body"`
-// 				URL     string              `json:"url"`
-// 				Icon    string              `json:"icon"`
-// 				Actions []map[string]string `json:"actions"`
-// 				ShopID  int                 `json:"shop_id"`
-// 				APIKey  string              `json:"api_key"`
-// 			}{
-// 				Title:   title,
-// 				Body:    body,
-// 				URL:     url,
-// 				Icon:    icon,
-// 				Actions: actions,
-// 				ShopID:  shop.ID,
-// 				APIKey:  shop.APIKey,
-// 			}
+				actions := make([]map[string]string, 0)
+				for _, button := range setting.Buttons {
+					action := make(map[string]string)
+					action["title"] = button.Text
+					action["action"] = button.Url
 
-// 			data, _ := json.Marshal(dataObj)
-// 			wn.Data = string(data)
+					actions = append(actions, action)
+				}
 
-// 			if setting.KeyString == "pusher_cart_reminder_15_mins" {
-// 				wn.SendAt = time.Now()
-// 			} else if setting.KeyString == "pusher_cart_reminder_1_hour" {
-// 				wn.SendAt = time.Now().Add(time.Minute * 45)
-// 			} else if setting.KeyString == "pusher_cart_reminder_24_hours" {
-// 				wn.SendAt = time.Now().Add(time.Hour * 24)
-// 			}
+				dataObj := struct {
+					Title   string              `json:"title"`
+					Body    string              `json:"body"`
+					URL     string              `json:"url"`
+					Icon    string              `json:"icon"`
+					Actions []map[string]string `json:"actions"`
+					ShopID  int                 `json:"shop_id"`
+					APIKey  string              `json:"api_key"`
+				}{
+					Title:   title,
+					Body:    body,
+					URL:     url,
+					Icon:    icon,
+					Actions: actions,
+					ShopID:  shop.ID,
+					APIKey:  shop.APIKey,
+				}
 
-// 			_, err := webNotificationService.Add(wn)
-// 			if err != nil {
-// 				log.Errorf("%s: %s", "Add web notification failed", err)
-// 			} else {
-// 				countNotification++
-// 			}
-// 		}
-// 	}
+				data, _ := json.Marshal(dataObj)
+				wn.Data = string(data)
 
-// 	if len(carts) > 0 || countNotification > 0 {
-// 		log.Info("Shop: ", shop.Domain)
-// 		log.Infof("Time: %s - %s", updatedAtMin, updatedAtMax)
-// 		log.Info("Count abandoned carts: ", len(carts))
-// 		log.Info("Count Notifications: ", countNotification)
-// 	}
-// }
+				if setting.KeyString == "pusher_cart_reminder_15_mins" {
+					wn.SendAt = time.Now()
+				} else if setting.KeyString == "pusher_cart_reminder_1_hour" {
+					wn.SendAt = time.Now().Add(time.Minute * 45)
+				} else if setting.KeyString == "pusher_cart_reminder_24_hours" {
+					wn.SendAt = time.Now().Add(time.Hour * 24)
+				}
+
+				_, err := webNotificationService.Add(wn)
+				if err != nil {
+					log.Errorf("%s: %s", "Add web notification failed", err)
+				} else {
+					countNotification++
+				}
+			}
+		} else {
+			continue
+		}
+	}
+
+	if len(carts) > 0 || countNotification > 0 {
+		log.Info("Shop: ", shop.Domain)
+		log.Infof("Time: %s - %s", updatedAtMin, updatedAtMax)
+		log.Info("Count abandoned carts: ", len(carts))
+		log.Info("Count Notifications: ", countNotification)
+	}
+}
 
 func getAbandonedProduct(shop *consumer.Shop, sub *consumer.Subscription) (*consumer.Product, error) {
 	params := struct {
@@ -503,7 +357,6 @@ func getAbandonedProduct(shop *consumer.Shop, sub *consumer.Subscription) (*cons
 	}
 
 	product, err := productService.GetByID(int64(productIDStr))
-	// product, err := productService.GetByID(1)
 
 	return product, err
 }

@@ -73,3 +73,37 @@ func (s *WebNotificationService) UpdateSent(wn *consumer.WebNotification) error 
 
 	return err
 }
+
+// GetByShopIDAndCartToken --
+func (s *WebNotificationService) GetByShopIDAndCartToken(shopID int, cartToken string) ([]*consumer.WebNotification, error) {
+	notifications := make([]*consumer.WebNotification, 0)
+
+	query := `
+	SELECT id, shop_id, cart_token, subscription, data
+	FROM web_notifications
+	WHERE shop_id = ? AND cart_token = ?`
+	rows, err := s.DB.Query(query, shopID, cartToken)
+
+	if err != nil {
+		return notifications, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		n := &consumer.WebNotification{}
+
+		err := rows.Scan(&n.ID, &n.ShopID, &n.CartToken, &n.Subscription, &n.Data)
+
+		if err != nil {
+			return notifications, err
+		}
+
+		notifications = append(notifications, n)
+	}
+
+	if err = rows.Err(); err != nil {
+		return notifications, err
+	}
+
+	return notifications, nil
+}
