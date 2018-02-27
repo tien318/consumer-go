@@ -101,7 +101,7 @@ func main() {
 }
 
 func run() {
-	log.Info("Start Fetch Abandoned Checkout from Shopify")
+	log.Info("Start GoPusher")
 
 	session, err := mgo.Dial(viper.GetString("mongodb.url"))
 
